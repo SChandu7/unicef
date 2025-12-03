@@ -4,6 +4,15 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "androidx.activity" && requested.name == "activity") {
+            useVersion("1.9.0")  // compatible version
+            because("Avoid requiring newer Android Gradle plugin 8.9.1")
+        }
+    }
+}
+
 
 android {
     namespace = "com.example.unicef"
@@ -18,6 +27,9 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
+
+    
+
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).

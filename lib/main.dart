@@ -1,114 +1,869 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:unicef/customre.dart';
+import 'package:unicef/loginsignup.dart';
 
 void main() {
-  runApp(const GovtSchemesApp());
+  runApp(const GovSchemesApp());
 }
 
-class GovtSchemesApp extends StatelessWidget {
-  const GovtSchemesApp({super.key});
+class GovSchemesApp extends StatelessWidget {
+  const GovSchemesApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Govt Schemes Dashboard',
+      title: 'Gov Schemes',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        primaryColor: const Color(0xFF015AA5),
+        scaffoldBackgroundColor: const Color(0xFFF3F6FB),
+        fontFamily: 'Poppins',
         useMaterial3: true,
-        colorSchemeSeed: Colors.indigo,
-        scaffoldBackgroundColor: const Color(0xFFF4F5FB),
-        textTheme: const TextTheme(bodyMedium: TextStyle(fontFamily: 'Roboto')),
       ),
-      home: const GovtDashboardScreen(),
+      home: const HomePage(),
     );
   }
 }
 
-class Scheme {
-  final String id;
-  final String name;
-  final String shortCode;
-  final IconData icon;
-  final Color color;
-
-  final int totalFamilies;
-  final int coveredFamilies;
-  final int poorCount;
-  final int middleCount;
-  final int richCount;
-  final Map<String, int> villageCoverage;
-  final List<String> eligibilityPoints;
-  final List<String> reasonsNotAvailing;
-
-  Scheme({
-    required this.id,
-    required this.name,
-    required this.shortCode,
-    required this.icon,
-    required this.color,
-    required this.totalFamilies,
-    required this.coveredFamilies,
-    required this.poorCount,
-    required this.middleCount,
-    required this.richCount,
-    required this.villageCoverage,
-    required this.eligibilityPoints,
-    required this.reasonsNotAvailing,
-  });
-
-  double get coveragePercentage {
-    if (totalFamilies == 0) return 0;
-    return (coveredFamilies / totalFamilies) * 100;
-  }
-}
-
-class GovtDashboardScreen extends StatefulWidget {
-  const GovtDashboardScreen({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   @override
-  State<GovtDashboardScreen> createState() => _GovtDashboardScreenState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _GovtDashboardScreenState extends State<GovtDashboardScreen> {
-  late List<Scheme> schemes;
-  Scheme? selectedScheme;
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+  late final AnimationController _entryController;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<Offset> _slideAnimation;
+  late AnimationController _marqueeController;
+  late Animation<double> _marqueeAnimation;
+
+  int _langIndex = 0;
+
+  final List<String> marqueeTexts = [
+    "Latest Govt Update | New schemes launched | Apply now for education, health, farming & women empowerment | ",
+    "नवीन सरकारी योजनाएं जारी | शिक्षा, स्वास्थ्य, किसान और महिला सहायता के लिए आवेदन करें | अंतिम तिथियाँ निकट हैं — अभी जाँचें! | ",
+  ];
+
+  late final PageController _pageController;
+  int _currentBanner = 0;
+  Timer? _bannerTimer;
+
+  int _selectedIndex = 0;
+  late final List<Widget Function()> _screens;
+  int _selectedSchemeCategory = 0;
+
+  bool _isReady = false;
+
+  final List<String> _bannerTitles = [
+    "Mann Ki Baat - Join Live",
+    "New Scholarship Schemes",
+    "Women Empowerment Yojana",
+  ];
 
   @override
   void initState() {
     super.initState();
-    schemes = _mockSchemes;
-    selectedScheme = schemes.first;
+
+    // Store widget builders instead of building now
+    _screens = [
+      _buildHomeContent,
+      _buildSchemesPage,
+      _buildUpdatesPage,
+      _buildProfilePage,
+    ];
+
+    // Marquee Animation Setup
+    _marqueeController = AnimationController(
+      duration: const Duration(seconds: 18),
+      vsync: this,
+    );
+
+    _marqueeAnimation = Tween<double>(begin: 1.0, end: -1.0).animate(
+      CurvedAnimation(parent: _marqueeController, curve: Curves.linear),
+    );
+
+    _marqueeController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() {
+          _langIndex = (_langIndex + 1) % marqueeTexts.length;
+        });
+        _marqueeController.forward(from: 0);
+      }
+    });
+
+    // Start marquee
+    _marqueeController.forward();
+
+    // Entry Animation
+    _entryController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _entryController,
+      curve: Curves.easeOut,
+    );
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, -0.06), end: Offset.zero).animate(
+          CurvedAnimation(parent: _entryController, curve: Curves.easeOutCubic),
+        );
+
+    // Carousel auto scroll
+    _pageController = PageController();
+    _startBannerAutoScroll();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _entryController.forward();
+      setState(() => _isReady = true);
+    });
+  }
+
+  void _startBannerAutoScroll() {
+    _bannerTimer?.cancel();
+    _bannerTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (_pageController.hasClients) {
+        int nextPage = (_currentBanner + 1) % _bannerTitles.length;
+        _pageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _entryController.dispose();
+    _pageController.dispose();
+    _bannerTimer?.cancel();
+    _marqueeController.dispose();
+
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 900;
+    return Scaffold(
+      bottomNavigationBar: _buildBottomNavBar(),
+      body: SafeArea(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: _isReady ? _screens[_selectedIndex]() : SizedBox(),
+        ),
+      ),
+    );
+  }
 
-        return Scaffold(
-          body: SafeArea(
-            child: Row(
+  Widget _buildHomeContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        _buildHeader(),
+        const SizedBox(height: 8),
+        _buildSearchBar(),
+        const SizedBox(height: 8),
+        _buildMarquee(),
+
+        Expanded(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // LEFT PANE – scheme cards
-                SizedBox(
-                  width: isNarrow ? 280 : 320,
-                  child: _buildLeftPane(context),
+                const SizedBox(height: 10),
+                _buildCarousel(),
+                const SizedBox(height: 14),
+                _buildQuickActions(),
+                const SizedBox(height: 8),
+                _buildStatsRow(),
+                const SizedBox(height: 18),
+                _buildGetInvolvedCard(),
+                const SizedBox(height: 18),
+                _buildOurSchemesSection(),
+                const SizedBox(height: 22),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSchemesPage() {
+    final categories = [
+      {"name": "Students", "icon": Icons.school},
+      {"name": "Farmers", "icon": Icons.agriculture},
+      {"name": "Women", "icon": Icons.woman},
+      {"name": "Health", "icon": Icons.health_and_safety},
+      {"name": "Jobs", "icon": Icons.work},
+      {"name": "Seniors", "icon": Icons.elderly},
+    ];
+
+    final schemeData = {
+      "Students": [
+        {"name": "National Scholarship Portal (NSP)", "status": "Eligible"},
+        {"name": "PM Scholar Merit Scholarship", "status": "Applied"},
+        {"name": "AICTE Pragati Scholarship", "status": "Eligible"},
+        {"name": "Digital India Internship", "status": "Applied"},
+        {"name": "PM YASASVI Scholarship", "status": "New"},
+        {"name": "UGC NET Fellowship Scheme", "status": "Eligible"},
+        {"name": "INSPIRE Science Scholarship", "status": "Pending"},
+        {"name": "EWS Education Subsidy", "status": "Not Eligible"},
+      ],
+
+      "Farmers": [
+        {"name": "PM Kisan Samman Nidhi", "status": "Eligible"},
+        {"name": "Soil Health Card Scheme", "status": "Eligible"},
+        {"name": "Pradhan Mantri Fasal Bima Yojana", "status": "Applied"},
+
+        {"name": "Paramparagat Krishi Vikas Yojana", "status": "Eligible"},
+        {"name": "Agriculture Infrastructure Fund", "status": "Not Eligible"},
+      ],
+
+      "Women": [
+        {"name": "Pradhan Mantri Ujjwala Yojana", "status": "Eligible"},
+        {"name": "Ladli Laxmi Yojana", "status": "Not Eligible"},
+        {"name": "PM Matru Vandana Yojana", "status": "Applied"},
+        {"name": "Self Help Group Loan Scheme", "status": "Eligible"},
+        {"name": "Mission Shakti Scheme", "status": "Pending"},
+        {"name": "Working Women Hostel Scheme", "status": "Eligible"},
+        {"name": "Sukanya Samriddhi Yojana", "status": "New"},
+        {"name": "Nari Samman Yojana", "status": "Eligible"},
+      ],
+
+      "Health": [
+        {"name": "Ayushman Bharat - PMJAY", "status": "Eligible"},
+        {"name": "Janani Suraksha Yojana", "status": "Applied"},
+        {"name": "E-Sanjeevani Online Consultation", "status": "Eligible"},
+      ],
+
+      "Jobs": [
+        {"name": "PM Skill India Training", "status": "Eligible"},
+        {"name": "Mudra Loan for Startups", "status": "Applied"},
+        {"name": "NAPS Apprenticeship Program", "status": "Eligible"},
+        {"name": "Agnipath Military Recruitment", "status": "Not Eligible"},
+        {"name": "PM Vishwakarma Scheme", "status": "New"},
+      ],
+
+      "Seniors": [
+        {"name": "Atal Pension Yojana", "status": "Eligible"},
+        {"name": "Old Age Pension Yojana", "status": "Applied"},
+        {"name": "Senior Citizen Travel Subsidy", "status": "Eligible"},
+        {"name": "Varishtha Mediclaim Policy", "status": "Pending"},
+        {"name": "National Social Assistance Scheme", "status": "Eligible"},
+        {"name": "Indira Gandhi Pension Scheme", "status": "Not Eligible"},
+        {"name": "Senior Digital Literacy Program", "status": "New"},
+        {"name": "Home Visit Medical Support", "status": "Eligible"},
+      ],
+    };
+
+    final selectedCategory = categories[_selectedSchemeCategory]["name"];
+    final schemes = schemeData[selectedCategory] ?? [];
+
+    // Status → Color mapping
+    Color statusColor(String status) {
+      switch (status) {
+        case "Eligible":
+          return Color(0xFF2E7D32); // Green
+        case "Applied":
+          return Color(0xFF1976D2); // Blue
+        case "Not Eligible":
+          return Color(0xFFD32F2F); // Red
+        case "Pending":
+          return Color(0xFFFFA000); // Amber
+        case "New":
+          return Color(0xFF673AB7); // Purple
+        default:
+          return Colors.grey;
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        _buildHeader(),
+        const SizedBox(height: 10),
+
+        // MAIN CONTENT DIVIDED IN TWO PARTS
+        Expanded(
+          child: Row(
+            children: [
+              // LEFT CATEGORY PANEL
+              Container(
+                width: MediaQuery.of(context).size.width * 0.22,
+                color: Colors.white,
+                child: ListView.builder(
+                  itemCount: categories.length,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  itemBuilder: (context, index) {
+                    final selected = _selectedSchemeCategory == index;
+
+                    return GestureDetector(
+                      onTap: () =>
+                          setState(() => _selectedSchemeCategory = index),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 220),
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? const Color(0xFF015AA5)
+                              : Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              categories[index]["icon"] as IconData,
+                              color: selected ? Colors.white : Colors.black54,
+                              size: 21,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              categories[index]["name"] as String,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: selected ? Colors.white : Colors.black87,
+                                fontSize: 11,
+                                fontWeight: selected
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              // RIGHT SIDE — SCHEMES SECTION
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(10),
+                    itemCount: schemes.length,
+                    itemBuilder: (context, index) {
+                      final scheme = schemes[index];
+                      final status = scheme["status"];
+                      final col = statusColor(status!);
+
+                      return GestureDetector(
+                        onTap: () => _showSchemeDetails(
+                          scheme["name"] as String,
+                          status,
+                        ),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 14),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 22,
+                                backgroundColor: col.withOpacity(0.15),
+                                child: Icon(Icons.description, color: col),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Text(
+                                  scheme["name"] as String,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: col.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Text(
+                                  status,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: col,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUpdatesPage() {
+    final updates = [
+      {
+        "scheme": "PM Kisan Samman Nidhi",
+        "status": "Approved",
+        "date": "10 Feb 2025",
+        "message": "Your application has been successfully approved.",
+        "icon": Icons.check_circle_outline,
+        "color": Colors.green,
+      },
+      {
+        "scheme": "National Scholarship Portal",
+        "status": "Under Review",
+        "date": "06 Feb 2025",
+        "message": "Documents verified. Awaiting departmental approval.",
+        "icon": Icons.timelapse_outlined,
+        "color": Colors.orange,
+      },
+      {
+        "scheme": "Ujjwala Yojana",
+        "status": "Rejected",
+        "date": "02 Feb 2025",
+        "message": "Application rejected due to missing income certificate.",
+        "icon": Icons.cancel_outlined,
+        "color": Colors.redAccent,
+      },
+      {
+        "scheme": "Pradhan Mantri Awas Yojana",
+        "status": "Pending",
+        "date": "29 Jan 2025",
+        "message": "Application submitted and waiting for review.",
+        "icon": Icons.hourglass_bottom,
+        "color": Colors.blueGrey,
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // const SizedBox(height: 8),
+        // _buildHeader(),
+        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Center(
+            child: const Text(
+              "Application Status",
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 5),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            "Track the real-time status of your government scheme applications",
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: updates.length,
+            itemBuilder: (context, index) {
+              final item = updates[index];
+              return Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 6,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // const SizedBox(height: 8),
+                    // _buildHeader(),
+                    // Header row
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: (item["color"] as Color).withOpacity(
+                            0.14,
+                          ),
+                          child: Icon(
+                            item["icon"] as IconData,
+                            size: 20,
+                            color: item["color"] as Color,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            item["scheme"] as String,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // Status tag
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: (item["color"] as Color).withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        item["status"] as String,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: item["color"] as Color,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // Message
+                    Text(
+                      item["message"] as String,
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.3,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Date
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        item["date"] as String,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfilePage() {
+    final options = [
+      {"title": "My Activities", "icon": Icons.task_alt_rounded},
+      {"title": "Saved Schemes", "icon": Icons.bookmark_added_outlined},
+      {"title": "Application History", "icon": Icons.history_toggle_off},
+      {"title": "Support & Helpdesk", "icon": Icons.support_agent_rounded},
+      {"title": "Language Preference", "icon": Icons.language_rounded},
+      {"title": "Settings", "icon": Icons.settings_outlined},
+      {"title": "About App", "icon": Icons.info_outline},
+    ];
+
+    return Column(
+      children: [
+        const SizedBox(height: 8),
+        _buildHeader(),
+
+        // -------- HEADER GRADIENT SECTION --------
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 28),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0D92FF), Color(0xFF05A64C)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Column(
+            children: [
+              // Avatar
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: Colors.white,
+                child: Icon(
+                  Icons.person,
+                  size: 50,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Welcome Text
+              const Text(
+                "Welcome",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Login/Register Button
+              OutlinedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginPage()),
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.white, width: 1.2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  "Login / Register",
+                  style: TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // -------- OPTIONS LIST --------
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: options.length,
+            separatorBuilder: (_, __) => const Divider(height: 0),
+            itemBuilder: (context, index) {
+              final item = options[index];
+              return InkWell(
+                onTap: () {},
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundColor: const Color(0xFFE9F4FF),
+                        child: Icon(
+                          item["icon"] as IconData,
+                          size: 20,
+                          color: const Color(0xFF015AA5),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          item["title"] as String,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showSchemeDetails(String title, String status) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      backgroundColor: Colors.white,
+      builder: (_) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 30),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Drag Handle
+                Center(
+                  child: Container(
+                    height: 5,
+                    width: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
                 ),
 
-                // Divider line
-                Container(width: 1, color: Colors.grey.shade300),
+                const SizedBox(height: 14),
 
-                // RIGHT PANE – dashboard details
-                Expanded(
-                  child: selectedScheme == null
-                      ? const Center(
-                          child: Text(
-                            'Select a scheme from left side to view dashboard',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        )
-                      : _buildRightPane(context, selectedScheme!),
+                // Title
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                // Status Tag
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(status).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: _getStatusColor(status),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Description
+                const Text(
+                  "📌 Scheme Overview",
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "This scheme aims to provide benefits to eligible citizens by supporting education, financial aid, and welfare depending on the scheme category.",
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade700,
+                    height: 1.3,
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // Eligibility Section
+                const Text(
+                  "✔ Eligibility Criteria",
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 6),
+                _bullet("- Indian Citizen"),
+                _bullet("- Aadhaar required"),
+                _bullet("- Income criteria may apply"),
+                _bullet("- Age and education requirements vary"),
+
+                const SizedBox(height: 18),
+
+                // Required Documents
+                const Text(
+                  "📄 Required Documents",
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 6),
+                _bullet("- Aadhaar Card"),
+                _bullet("- Income Certificate"),
+                _bullet("- Bank Passbook"),
+                _bullet("- Passport size photo"),
+                _bullet("- Address proof"),
+
+                const SizedBox(height: 22),
+
+                // Apply Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF015AA5),
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      "Apply Now",
+                      style: TextStyle(fontSize: 15, color: Colors.white),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // Optional Link Button
+                TextButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.open_in_new, size: 18),
+                  label: const Text("View Official Website"),
                 ),
               ],
             ),
@@ -118,90 +873,220 @@ class _GovtDashboardScreenState extends State<GovtDashboardScreen> {
     );
   }
 
-  Widget _buildLeftPane(BuildContext context) {
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case "eligible":
+        return Colors.green;
+      case "applied":
+        return Colors.orange;
+      case "not eligible":
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Widget _bullet(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("• ", style: TextStyle(fontSize: 14)),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
+        ],
+      ),
+    );
+  }
+
+  // ------------------ WIDGETS -------------------------
+
+  Widget _buildBottomNavBar() {
+    return BottomNavigationBar(
+      currentIndex: _selectedIndex,
+      onTap: (index) {
+        setState(() => _selectedIndex = index);
+      },
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: const Color(0xFF015AA5),
+      unselectedItemColor: Colors.grey,
+      elevation: 12,
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.list_alt_outlined),
+          label: 'Schemes',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.notifications_outlined),
+          label: 'Updates',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person_outline),
+          label: 'Profile',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActions() {
+    final actions = [
+      {
+        "label_en": "My Schemes",
+        "label_hi": "आपकी योजनाएँ",
+        "icon": Icons.account_balance_wallet_outlined,
+        "color": Color(0xFF005BBB),
+      },
+      {
+        "label_en": "Eligibility",
+        "label_hi": "पात्रता",
+        "icon": Icons.verified_user_outlined,
+        "color": Color(0xFF008F4A),
+      },
+      {
+        "label_en": "Documents",
+        "label_hi": "दस्तावेज़",
+        "icon": Icons.file_present_outlined,
+        "color": Color(0xFFDD6B20),
+      },
+      {
+        "label_en": "Apply",
+        "label_hi": "आवेदन",
+        "icon": Icons.how_to_reg_outlined,
+        "color": Color(0xFF9C27B0),
+      },
+      {
+        "label_en": "Support",
+        "label_hi": "सहायता",
+        "icon": Icons.support_agent_outlined,
+        "color": Color(0xFF37474F),
+      },
+      {
+        "label_en": "Nearby",
+        "label_hi": "पास में",
+        "icon": Icons.location_on_outlined,
+        "color": Color(0xFFE53935),
+      },
+      {
+        "label_en": "Updates",
+        "label_hi": "अपडेट",
+        "icon": Icons.new_releases_outlined,
+        "color": Color(0xFF3F51B5),
+      },
+      {
+        "label_en": "Helpdesk",
+        "label_hi": "सहायता केंद्र",
+        "icon": Icons.support_outlined,
+        "color": Color(0xFF0097A7),
+      },
+    ];
+
+    // group into pages of 4
+    final pages = List.generate(
+      (actions.length / 4).ceil(),
+      (i) => actions.skip(i * 4).take(4).toList(),
+    );
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      color: const Color(0xFF101322),
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.withOpacity(0.25), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Row(
-            children: [
-              const Icon(Icons.account_balance, color: Colors.white, size: 26),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  'Govt Schemes\nDashboard – NIT Raipur',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    height: 1.2,
-                    fontWeight: FontWeight.w600,
-                  ),
+          // Header section
+          Padding(
+            padding: const EdgeInsets.only(left: 12, bottom: 8),
+            child: Row(
+              children: const [
+                Icon(
+                  Icons.flash_on_rounded,
+                  size: 18,
+                  color: Color(0xFF015AA5),
                 ),
-              ),
-              IconButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => CitizenDashboard()),
-                  );
-                },
-                icon: const Icon(Icons.settings, color: Colors.white70),
-                tooltip: 'Settings',
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C2033),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: const Row(
-              children: [
-                Icon(Icons.search, color: Colors.white54, size: 18),
                 SizedBox(width: 6),
-                Expanded(
-                  child: TextField(
-                    style: TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'Search schemes...',
-                      hintStyle: TextStyle(color: Colors.white54, fontSize: 13),
-                    ),
+                Text(
+                  "Quick Actions",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF015AA5),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Schemes',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: ListView.separated(
-              itemCount: schemes.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+
+          SizedBox(
+            height: 90,
+            child: PageView.builder(
+              itemCount: pages.length,
+              scrollDirection: Axis.horizontal,
+              controller: PageController(viewportFraction: 1),
+              physics: const BouncingScrollPhysics(),
               itemBuilder: (context, index) {
-                final scheme = schemes[index];
-                final bool isSelected = scheme.id == selectedScheme?.id;
-                return _SchemeCard(
-                  scheme: scheme,
-                  isSelected: isSelected,
-                  onTap: () {
-                    setState(() {
-                      selectedScheme = scheme;
-                    });
-                  },
+                final pageItems = pages[index];
+
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: pageItems.map((item) {
+                    return GestureDetector(
+                      onTap: () => print("Tapped: ${item["label_en"]}"),
+                      child: Column(
+                        children: [
+                          Container(
+                            height: 50,
+                            width: 50,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: (item["color"] as Color).withOpacity(
+                                  0.4,
+                                ),
+                                width: 1.5,
+                              ),
+                              color: (item["color"] as Color).withOpacity(0.12),
+                            ),
+                            child: Icon(
+                              item["icon"] as IconData,
+                              size: 26,
+                              color: item["color"] as Color,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            item["label_en"] as String,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            item["label_hi"] as String,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Color(0xFF595959),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
                 );
               },
             ),
@@ -211,173 +1096,316 @@ class _GovtDashboardScreenState extends State<GovtDashboardScreen> {
     );
   }
 
-  Widget _buildRightPane(BuildContext context, Scheme scheme) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      child: Row(
         children: [
-          // Top bar: title + filters
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start, // <-- THIS FIXES IT
             children: [
-              Icon(scheme.icon, color: scheme.color, size: 28),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  scheme.name,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+              Row(
+                children: const [
+                  SizedBox(width: 10),
+                  Icon(
+                    Icons.account_balance,
+                    size: 22,
+                    color: Color(0xFF777777),
                   ),
-                ),
+                  SizedBox(width: 4),
+                  Text(
+                    "UNICEF",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
               ),
-              // small quick filters – just UI
-              Wrap(
-                spacing: 8,
-                children: [
-                  FilterChip(
-                    label: const Text('All Families'),
-                    selected: true,
-                    onSelected: (_) {},
+
+              SizedBox(height: 2),
+
+              Row(
+                children: const [
+                  Text(
+                    "your",
+                    style: TextStyle(
+                      color: Color(0xFF05A64C),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
-                  FilterChip(
-                    label: const Text('Poor / BPL'),
-                    selected: false,
-                    onSelected: (_) {},
+                  Text(
+                    "Schemes ",
+                    style: TextStyle(
+                      color: Color(0xFF015AA5),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
-                  FilterChip(
-                    label: const Text('Village-wise'),
-                    selected: false,
-                    onSelected: (_) {},
+                  Text(
+                    "आपकी योजनाएँ",
+                    style: TextStyle(color: Color(0xFF777777), fontSize: 11),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
 
-          // Body scrollable content
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F3FF),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(),
+          ),
+          const SizedBox(width: 10),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(Icons.notifications_none_outlined, size: 26),
+              Positioned(
+                right: -2,
+                top: -2,
+                child: Container(
+                  height: 14,
+                  width: 14,
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    "1",
+                    style: TextStyle(fontSize: 9, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: "Search schemes, tasks, activities",
+          hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+          prefixIcon: const Icon(Icons.search),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 0,
+            vertical: 0,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFF015AA5), width: 1.3),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMarquee() {
+    return Container(
+      height: 32,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFEDF4FF), Color(0xFFE0F7FF)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 10),
+
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Color(0xFF015AA5),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              "NEWS/सूचना",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 1),
+
           Expanded(
-            child: SingleChildScrollView(
-              child: Column(
+            child: ClipRect(
+              child: AnimatedBuilder(
+                animation: _marqueeController,
+                builder: (context, child) {
+                  final width = MediaQuery.of(context).size.width;
+
+                  return Transform.translate(
+                    offset: Offset(_marqueeAnimation.value * width, 0),
+                    child: child!,
+                  );
+                },
+                child: Text(
+                  (marqueeTexts[_langIndex] * 2), // ensures seamless flow
+                  softWrap: false,
+                  overflow: TextOverflow.visible,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF204B78),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCarousel() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Column(
+        children: [
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  // KPI cards row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _InfoStatCard(
-                          title: 'Total Families',
-                          value: '${scheme.totalFamilies}',
-                          subtitle: 'Households surveyed',
-                          icon: Icons.groups,
+                  PageView.builder(
+                    controller: _pageController,
+                    itemCount: _bannerTitles.length,
+                    onPageChanged: (i) {
+                      setState(() => _currentBanner = i);
+                    },
+                    itemBuilder: (context, index) {
+                      return Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF0C5AA6), Color(0xFF022B5B)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _InfoStatCard(
-                          title: 'Covered Families',
-                          value: '${scheme.coveredFamilies}',
-                          subtitle: 'Already received scheme benefit',
-                          icon: Icons.verified_user,
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              left: 12,
+                              bottom: 14,
+                              right: 120,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _bannerTitles[index],
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  const Text(
+                                    "30th Nov 2025 • 11:00 AM\nWatch live and participate.",
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.redAccent,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: const [
+                                        Icon(
+                                          Icons.play_arrow,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          "WATCH LIVE",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 14),
+                                child: CircleAvatar(
+                                  radius: 55,
+                                  backgroundColor: Colors.white,
+                                  backgroundImage: const NetworkImage(
+                                    "https://i.postimg.cc/7ZqLXnXk/modi.jpg",
+                                  ),
+                                  // replace with any public image you like
+                                  onBackgroundImageError: (_, __) {},
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _InfoStatCard(
-                          title: 'Coverage',
-                          value:
-                              '${scheme.coveragePercentage.toStringAsFixed(1)}%',
-                          subtitle: 'Families covered / total',
-                          icon: Icons.show_chart,
-                        ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                  const SizedBox(height: 18),
-
-                  // Charts row – Poverty graph + village graph
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Socio-economic bar chart
-                      Expanded(
-                        flex: 2,
-                        child: _CardContainer(
-                          title: 'Socio-Economic Distribution',
-                          subtitle:
-                              'How many families (Poor / Middle / Rich) are covered under this scheme',
-                          child: _SocioEconomicChart(scheme: scheme),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      // Village coverage graph
-                      Expanded(
-                        flex: 3,
-                        child: _CardContainer(
-                          title: 'Village-wise Coverage',
-                          subtitle:
-                              'Number of families per village that received scheme benefits',
-                          child: _VillageCoverageChart(scheme: scheme),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-
-                  // Eligibility & reasons not availing
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _CardContainer(
-                          title: 'Eligibility Criteria',
-                          subtitle:
-                              'Which families are eligible to receive this scheme',
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              for (final point in scheme.eligibilityPoints)
-                                _BulletPoint(text: point),
-                            ],
+                  Positioned(
+                    bottom: 8,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        _bannerTitles.length,
+                        (i) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          height: 6,
+                          width: _currentBanner == i ? 18 : 7,
+                          decoration: BoxDecoration(
+                            color: _currentBanner == i
+                                ? Colors.white
+                                : Colors.white54,
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _CardContainer(
-                          title: 'Why eligible families are not taking it',
-                          subtitle:
-                              'Reasons why some households are still not availing this scheme',
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              for (final reason in scheme.reasonsNotAvailing)
-                                _BulletPoint(text: reason),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-
-                  // Bottom info: summary
-                  _CardContainer(
-                    title: 'Summary for Officials',
-                    subtitle:
-                        'Quick view for district / block level decision makers',
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '• Approx. ${scheme.coveragePercentage.toStringAsFixed(1)}% families covered. '
-                          'Focus is required on remaining ${(100 - scheme.coveragePercentage).toStringAsFixed(1)}% families.\n'
-                          '• Priority villages: ${_topVillagesString(scheme)}\n'
-                          '• You can drill down per household (next version) to see which family got benefit, who is pending, and exact reason.',
-                          style: const TextStyle(fontSize: 13.5, height: 1.4),
-                        ),
-                      ],
                     ),
                   ),
                 ],
@@ -389,640 +1417,381 @@ class _GovtDashboardScreenState extends State<GovtDashboardScreen> {
     );
   }
 
-  String _topVillagesString(Scheme s) {
-    if (s.villageCoverage.isEmpty) return 'No data';
-    final sorted = s.villageCoverage.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final top = sorted.take(3).map((e) => e.key).join(', ');
-    return top;
+  Widget _buildHorizontalCards() {
+    final cards = [
+      {
+        "title": "Join MyGov on WhatsApp",
+        "tag": "LATEST",
+        "color": const Color(0xFF0A7E3D),
+        "icon": Icons.chat_bubble_outline,
+      },
+      {
+        "title": "MyGov Pulse Newsletter",
+        "tag": "LATEST",
+        "color": const Color(0xFF015AA5),
+        "icon": Icons.mail_outline,
+      },
+      {
+        "title": "MyGov Saathi - build India",
+        "tag": "FEATURED",
+        "color": const Color(0xFFEE6B2D),
+        "icon": Icons.people_outline,
+      },
+    ];
+
+    return SizedBox(
+      height: 150,
+      child: ListView.builder(
+        padding: const EdgeInsets.only(left: 14),
+        scrollDirection: Axis.horizontal,
+        itemCount: cards.length,
+        physics: const BouncingScrollPhysics(),
+        itemBuilder: (context, index) {
+          final card = cards[index];
+          return Container(
+            width: 190,
+            margin: const EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 70,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(14),
+                    ),
+                    gradient: LinearGradient(
+                      colors: [
+                        (card["color"] as Color).withOpacity(0.9),
+                        (card["color"] as Color).withOpacity(0.7),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      card["icon"] as IconData,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  child: Text(
+                    card["title"] as String,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF5FF),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      card["tag"] as String,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF015AA5),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
-}
 
-/// LHS scheme tile card
-class _SchemeCard extends StatelessWidget {
-  final Scheme scheme;
-  final bool isSelected;
-  final VoidCallback onTap;
+  Widget _buildStatsRow() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildStatCard(
+              value: "604.14 + Lakh",
+              label: "Registered Members",
+              icon: Icons.groups,
+              color: const Color(0xFF1A73E8),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _buildStatCard(
+              value: "18.37 + Lakh",
+              label: "Submissions in 1,865 Tasks",
+              icon: Icons.assignment_turned_in_outlined,
+              color: const Color(0xFFE37400),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  const _SchemeCard({
-    required this.scheme,
-    required this.isSelected,
-    required this.onTap,
-  });
+  Widget _buildStatCard({
+    required String value,
+    required String label,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      height: 82,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: color.withOpacity(0.12),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final bgColor = isSelected
-        ? scheme.color.withOpacity(0.18)
-        : const Color(0xFF1C2033);
-    final borderColor = isSelected
-        ? scheme.color
-        : Colors.white.withOpacity(0.06);
+  Widget _buildGetInvolvedCard() {
+    final items = [
+      {"icon": Icons.check_box_outlined, "label": "Do/Task"},
+      {"icon": Icons.chat_bubble_outline, "label": "Discuss"},
+      {"icon": Icons.bar_chart_outlined, "label": "Poll/Survey"},
+      {"icon": Icons.edit_outlined, "label": "Blog"},
+    ];
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Container(
         decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor, width: 1),
-        ),
-        padding: const EdgeInsets.all(10),
-        child: Row(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: scheme.color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              padding: const EdgeInsets.all(8),
-              child: Icon(scheme.icon, color: scheme.color, size: 20),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Get Involved",
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 2),
+            const Text(
+              "Participate in nation building activities",
+              style: TextStyle(fontSize: 11, color: Colors.grey),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: items.map((item) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      height: 38,
+                      width: 38,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3F7FF),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        item["icon"] as IconData,
+                        size: 22,
+                        color: const Color(0xFF015AA5),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: 70,
+                      child: Text(
+                        item["label"] as String,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOurSchemesSection() {
+    final schemes = [
+      {
+        "label": "For Students",
+        "icon": Icons.school_outlined,
+        "color": const Color(0xFF1565C0),
+      },
+      {
+        "label": "For Farmers",
+        "icon": Icons.agriculture_outlined,
+        "color": const Color(0xFF2E7D32),
+      },
+      {
+        "label": "For Women",
+        "icon": Icons.woman_2_outlined,
+        "color": const Color(0xFFD81B60),
+      },
+      {
+        "label": "Health & Care",
+        "icon": Icons.health_and_safety_outlined,
+        "color": const Color(0xFF00897B),
+      },
+      {
+        "label": "Jobs & Skills",
+        "icon": Icons.work_outline,
+        "color": const Color(0xFF5E35B1),
+      },
+      {
+        "label": "Housing",
+        "icon": Icons.house_outlined,
+        "color": const Color(0xFFEF6C00),
+      },
+      {
+        "label": "Senior Citizens",
+        "icon": Icons.elderly_outlined,
+        "color": const Color(0xFF455A64),
+      },
+      {
+        "label": "All Schemes",
+        "icon": Icons.grid_view_outlined,
+        "color": const Color(0xFF015AA5),
+      },
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Our Schemes for You",
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            "Browse schemes based on your category and needs",
+            style: TextStyle(fontSize: 11, color: Colors.grey),
+          ),
+          const SizedBox(height: 10),
+          GridView.builder(
+            itemCount: schemes.length,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.8,
+            ),
+            itemBuilder: (context, index) {
+              final item = schemes[index];
+              return Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
+                  Container(
+                    height: 44,
+                    width: 44,
+                    decoration: BoxDecoration(
+                      color: (item["color"] as Color).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(
+                      item["icon"] as IconData,
+                      color: item["color"] as Color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
                   Text(
-                    scheme.shortCode,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                    item["label"] as String,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    scheme.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.groups, size: 14, color: Colors.white54),
-                      const SizedBox(width: 3),
-                      Text(
-                        '${scheme.totalFamilies}',
-                        style: const TextStyle(
-                          color: Colors.white60,
-                          fontSize: 11,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: Colors.greenAccent.shade400,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        '${scheme.coveragePercentage.toStringAsFixed(0)}% covered',
-                        style: const TextStyle(
-                          color: Colors.white60,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              isSelected ? Icons.keyboard_arrow_right : Icons.arrow_forward_ios,
-              color: Colors.white38,
-              size: 14,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Small stat card at top of right pane
-class _InfoStatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String subtitle;
-  final IconData icon;
-
-  const _InfoStatCard({
-    required this.title,
-    required this.value,
-    required this.subtitle,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return _CardContainer(
-      padding: const EdgeInsets.all(14),
-      title: title,
-      subtitle: subtitle,
-      trailing: Icon(icon, size: 20, color: Colors.grey.shade700),
-      child: Padding(
-        padding: const EdgeInsets.only(top: 8),
-        child: Text(
-          value,
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey.shade900,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Generic card container
-class _CardContainer extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-  final Widget child;
-  final EdgeInsetsGeometry? padding;
-  final Widget? trailing;
-
-  const _CardContainer({
-    required this.title,
-    this.subtitle,
-    required this.child,
-    this.padding,
-    this.trailing,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      margin: EdgeInsets.zero,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        padding: padding ?? const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                if (trailing != null) trailing!,
-              ],
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 2),
-              Text(
-                subtitle!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.grey.shade600,
-                  height: 1.3,
-                ),
-              ),
-            ],
-            const SizedBox(height: 10),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Bullet text row
-class _BulletPoint extends StatelessWidget {
-  final String text;
-
-  const _BulletPoint({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('• ', style: TextStyle(fontSize: 13.5, height: 1.4)),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 13.5, height: 1.4),
-            ),
+              );
+            },
           ),
         ],
       ),
     );
   }
 }
-
-/// Simple bar chart for Poor / Middle / Rich
-class _SocioEconomicChart extends StatelessWidget {
-  final Scheme scheme;
-
-  const _SocioEconomicChart({required this.scheme});
-
-  @override
-  Widget build(BuildContext context) {
-    final int maxVal = [
-      scheme.poorCount,
-      scheme.middleCount,
-      scheme.richCount,
-    ].reduce((a, b) => a > b ? a : b);
-    if (maxVal == 0) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text('No data available'),
-        ),
-      );
-    }
-
-    return SizedBox(
-      height: 200,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          _BarColumn(label: 'Poor', value: scheme.poorCount, maxValue: maxVal),
-          _BarColumn(
-            label: 'Middle',
-            value: scheme.middleCount,
-            maxValue: maxVal,
-          ),
-          _BarColumn(label: 'Rich', value: scheme.richCount, maxValue: maxVal),
-        ],
-      ),
-    );
-  }
-}
-
-/// Simple horizontal bar chart for village-wise coverage
-class _VillageCoverageChart extends StatelessWidget {
-  final Scheme scheme;
-
-  const _VillageCoverageChart({required this.scheme});
-
-  @override
-  Widget build(BuildContext context) {
-    if (scheme.villageCoverage.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text('No village data available'),
-        ),
-      );
-    }
-
-    final entries = scheme.villageCoverage.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    final maxValue = entries.first.value;
-
-    return Column(
-      children: [
-        const SizedBox(height: 4),
-        for (final e in entries)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 100,
-                  child: Text(
-                    e.key,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Container(
-                    height: 16,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      color: Colors.indigo.withOpacity(0.12),
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: FractionallySizedBox(
-                        widthFactor: maxValue == 0
-                            ? 0
-                            : (e.value / maxValue).clamp(0, 1).toDouble(),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(999),
-                            color: Colors.indigo,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 40,
-                  child: Text(
-                    '${e.value}',
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(fontSize: 12.5),
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-/// vertical bar for socio-economic chart
-class _BarColumn extends StatelessWidget {
-  final String label;
-  final int value;
-  final int maxValue;
-
-  const _BarColumn({
-    required this.label,
-    required this.value,
-    required this.maxValue,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final double heightFactor = maxValue == 0
-        ? 0
-        : (value / maxValue).clamp(0, 1).toDouble();
-
-    return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Text('$value', style: const TextStyle(fontSize: 11)),
-          const SizedBox(height: 4),
-          Expanded(
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                width: 26,
-                height: 150,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),
-                  color: Colors.grey.shade200,
-                ),
-                alignment: Alignment.bottomCenter,
-                child: FractionallySizedBox(
-                  heightFactor: heightFactor,
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      color: Colors.indigo,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(label, style: const TextStyle(fontSize: 11)),
-        ],
-      ),
-    );
-  }
-}
-
-final List<Scheme> _mockSchemes = [
-  Scheme(
-    id: '1',
-    name: 'Pradhan Mantri Awas Yojana (PMAY)',
-    shortCode: 'PMAY – Housing for All',
-    icon: Icons.home_work,
-    color: Colors.indigo,
-    totalFamilies: 1200,
-    coveredFamilies: 860,
-    poorCount: 640,
-    middleCount: 180,
-    richCount: 40,
-    villageCoverage: {
-      'Village A': 240,
-      'Village B': 210,
-      'Village C': 180,
-      'Village D': 120,
-      'Village E': 110,
-    },
-    eligibilityPoints: [
-      'Family does not own a pucca house.',
-      'Valid Aadhaar and ration card.',
-      'EWS/LIG income category.',
-    ],
-    reasonsNotAvailing: [
-      'Land dispute.',
-      'Lack of proper documentation.',
-      'Unaware of eligibility.',
-    ],
-  ),
-
-  Scheme(
-    id: '2',
-    name: 'Ayushman Bharat – PM-JAY',
-    shortCode: 'PMJAY – Health Insurance',
-    icon: Icons.health_and_safety,
-    color: Colors.green,
-    totalFamilies: 950,
-    coveredFamilies: 670,
-    poorCount: 520,
-    middleCount: 120,
-    richCount: 30,
-    villageCoverage: {
-      'Village A': 190,
-      'Village C': 160,
-      'Village F': 120,
-      'Village G': 90,
-      'Village H': 60,
-    },
-    eligibilityPoints: [
-      'Name must be in NFSA/SECC list',
-      'No tax-paying member',
-      'Aadhaar & e-KYC required',
-    ],
-    reasonsNotAvailing: [
-      'No knowledge of empanelled hospitals',
-      'Hospitals refusing cashless claims',
-    ],
-  ),
-
-  Scheme(
-    id: '3',
-    name: 'PM Kisan Samman Nidhi',
-    shortCode: 'PM-KISAN',
-    icon: Icons.agriculture,
-    color: Colors.orange,
-    totalFamilies: 600,
-    coveredFamilies: 420,
-    poorCount: 310,
-    middleCount: 90,
-    richCount: 20,
-    villageCoverage: {
-      'Village B': 140,
-      'Village D': 120,
-      'Village I': 80,
-      'Village J': 60,
-    },
-    eligibilityPoints: [
-      'Farmer with cultivable land',
-      'Bank account linked with Aadhaar',
-    ],
-    reasonsNotAvailing: ['Mismatch in records', 'Land not updated'],
-  ),
-
-  Scheme(
-    id: '4',
-    name: 'Ujjwala Yojana (PMUY)',
-    shortCode: 'PMUY – LPG Scheme',
-    icon: Icons.local_gas_station,
-    color: Colors.deepPurple,
-    totalFamilies: 780,
-    coveredFamilies: 540,
-    poorCount: 480,
-    middleCount: 50,
-    richCount: 10,
-    villageCoverage: {'Village A': 200, 'Village B': 140, 'Village D': 100},
-    eligibilityPoints: ['BPL household', 'Female applicant', 'Aadhaar'],
-    reasonsNotAvailing: ['Cylinder refill cost is high', 'No awareness'],
-  ),
-
-  Scheme(
-    id: '5',
-    name: 'Sukanya Samriddhi Yojana',
-    shortCode: 'SSY – Girl Child Savings',
-    icon: Icons.child_friendly,
-    color: Colors.pink,
-    totalFamilies: 500,
-    coveredFamilies: 300,
-    poorCount: 240,
-    middleCount: 50,
-    richCount: 10,
-    villageCoverage: {'Village C': 140, 'Village A': 100, 'Village E': 60},
-    eligibilityPoints: [
-      'Girl child age < 10 years',
-      'Parent identity & passbook',
-    ],
-    reasonsNotAvailing: ['Parents unaware', 'Bank form complexity'],
-  ),
-
-  Scheme(
-    id: '6',
-    name: 'MGNREGA Employment Scheme',
-    shortCode: 'MGNREGA – Rural Jobs',
-    icon: Icons.construction,
-    color: Colors.brown,
-    totalFamilies: 1400,
-    coveredFamilies: 980,
-    poorCount: 820,
-    middleCount: 140,
-    richCount: 20,
-    villageCoverage: {
-      'Village A': 300,
-      'Village B': 260,
-      'Village F': 240,
-      'Village K': 180,
-    },
-    eligibilityPoints: ['Family in rural India', 'Job card mandatory'],
-    reasonsNotAvailing: ['Payment delay', 'No job card'],
-  ),
-
-  Scheme(
-    id: '7',
-    name: 'Jan Dhan Yojana',
-    shortCode: 'PMJDY – Banking Access',
-    icon: Icons.account_balance_wallet,
-    color: Colors.teal,
-    totalFamilies: 1100,
-    coveredFamilies: 900,
-    poorCount: 750,
-    middleCount: 130,
-    richCount: 20,
-    villageCoverage: {'Village H': 260, 'Village A': 240, 'Village C': 220},
-    eligibilityPoints: ['No bank account previously', 'Aadhaar mandatory'],
-    reasonsNotAvailing: ['No KYC documents', 'Migration'],
-  ),
-
-  Scheme(
-    id: '8',
-    name: 'Swachh Bharat Mission – Toilets',
-    shortCode: 'SBM – Sanitation',
-    icon: Icons.wc,
-    color: Colors.blueGrey,
-    totalFamilies: 880,
-    coveredFamilies: 740,
-    poorCount: 680,
-    middleCount: 50,
-    richCount: 10,
-    villageCoverage: {'Village D': 260, 'Village B': 200, 'Village F': 180},
-    eligibilityPoints: [
-      'Must not already have toilet',
-      'Permanent rural residence',
-    ],
-    reasonsNotAvailing: ['Space issues', 'Construction delay'],
-  ),
-
-  Scheme(
-    id: '9',
-    name: 'National Scholarship Portal',
-    shortCode: 'NSP – Student Scholarship',
-    icon: Icons.school,
-    color: Colors.blue,
-    totalFamilies: 430,
-    coveredFamilies: 260,
-    poorCount: 210,
-    middleCount: 40,
-    richCount: 10,
-    villageCoverage: {'Village A': 90, 'Village E': 80, 'Village M': 60},
-    eligibilityPoints: [
-      'Student enrolled in recognised school/college',
-      'Income proof required',
-    ],
-    reasonsNotAvailing: ['Portal errors', 'Document upload issues'],
-  ),
-
-  Scheme(
-    id: '10',
-    name: 'PM Fasal Bima Yojana',
-    shortCode: 'PMFBY – Crop Insurance',
-    icon: Icons.grass,
-    color: Colors.lime,
-    totalFamilies: 520,
-    coveredFamilies: 390,
-    poorCount: 310,
-    middleCount: 60,
-    richCount: 20,
-    villageCoverage: {'Village B': 180, 'Village H': 120, 'Village D': 90},
-    eligibilityPoints: [
-      'Farmer growing notified crop',
-      'Aadhaar & land record verified',
-    ],
-    reasonsNotAvailing: ['Claim settlement delays', 'Premium confusion'],
-  ),
-];
