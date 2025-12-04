@@ -212,7 +212,7 @@ class _LoginPageState extends State<LoginPage> {
                                 FadeInUp(
                                   duration: const Duration(milliseconds: 1100),
                                   child: const Text(
-                                    "Welcome Back",
+                                    "Welcome Back/वापसी पर स्वागत है",
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 18,
@@ -267,7 +267,7 @@ class _LoginPageState extends State<LoginPage> {
                                         child: TextFormField(
                                           controller: _GetUsername,
                                           decoration: const InputDecoration(
-                                            hintText: "Email or Phone number",
+                                            hintText: "Username/प्रवेश नाम",
                                             hintStyle: TextStyle(
                                               color: Colors.grey,
                                             ),
@@ -299,7 +299,7 @@ class _LoginPageState extends State<LoginPage> {
                                           controller: _GetUserPassword,
                                           obscureText: eye,
                                           decoration: InputDecoration(
-                                            hintText: "Password",
+                                            hintText: "Password/पासवर्ड",
                                             hintStyle: const TextStyle(
                                               color: Colors.grey,
                                             ),
@@ -368,7 +368,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                   child: const Center(
                                     child: Text(
-                                      "Login",
+                                      "Login/प्रवेश करें",
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,

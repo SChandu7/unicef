@@ -38,6 +38,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late final Animation<Offset> _slideAnimation;
   late AnimationController _marqueeController;
   late Animation<double> _marqueeAnimation;
+  // Store recent searches
+  List<String> recentSearches = [];
+  TextEditingController _searchController = TextEditingController();
+  bool _isSearchFocused = false;
 
   int _langIndex = 0;
 
@@ -58,8 +62,79 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   final List<String> _bannerTitles = [
     "Mann Ki Baat - Join Live",
+    "मन की बात - सीधा प्रसारण",
+
     "New Scholarship Schemes",
+    "नई छात्रवृत्ति योजनाएँ",
+
     "Women Empowerment Yojana",
+    "महिला सशक्तिकरण योजना",
+  ];
+
+  final schemeData = {
+    "Students": [
+      {"name": "National Scholarship Portal (NSP)", "status": "Eligible"},
+      {"name": "PM Scholar Merit Scholarship", "status": "Applied"},
+      {"name": "AICTE Pragati Scholarship", "status": "Eligible"},
+      {"name": "Digital India Internship", "status": "Applied"},
+      {"name": "PM YASASVI Scholarship", "status": "New"},
+      {"name": "UGC NET Fellowship Scheme", "status": "Eligible"},
+      {"name": "INSPIRE Science Scholarship", "status": "Pending"},
+      {"name": "EWS Education Subsidy", "status": "Not Eligible"},
+    ],
+
+    "Farmers": [
+      {"name": "PM Kisan Samman Nidhi", "status": "Eligible"},
+      {"name": "Soil Health Card Scheme", "status": "Eligible"},
+      {"name": "Pradhan Mantri Fasal Bima Yojana", "status": "Applied"},
+
+      {"name": "Paramparagat Krishi Vikas Yojana", "status": "Eligible"},
+      {"name": "Agriculture Infrastructure Fund", "status": "Not Eligible"},
+    ],
+
+    "Women": [
+      {"name": "Pradhan Mantri Ujjwala Yojana", "status": "Eligible"},
+      {"name": "Ladli Laxmi Yojana", "status": "Not Eligible"},
+      {"name": "PM Matru Vandana Yojana", "status": "Applied"},
+      {"name": "Self Help Group Loan Scheme", "status": "Eligible"},
+      {"name": "Mission Shakti Scheme", "status": "Pending"},
+      {"name": "Working Women Hostel Scheme", "status": "Eligible"},
+      {"name": "Sukanya Samriddhi Yojana", "status": "New"},
+      {"name": "Nari Samman Yojana", "status": "Eligible"},
+    ],
+
+    "Health": [
+      {"name": "Ayushman Bharat - PMJAY", "status": "Eligible"},
+      {"name": "Janani Suraksha Yojana", "status": "Applied"},
+      {"name": "E-Sanjeevani Online Consultation", "status": "Eligible"},
+    ],
+
+    "Jobs": [
+      {"name": "PM Skill India Training", "status": "Eligible"},
+      {"name": "Mudra Loan for Startups", "status": "Applied"},
+      {"name": "NAPS Apprenticeship Program", "status": "Eligible"},
+      {"name": "Agnipath Military Recruitment", "status": "Not Eligible"},
+      {"name": "PM Vishwakarma Scheme", "status": "New"},
+    ],
+
+    "Seniors": [
+      {"name": "Atal Pension Yojana", "status": "Eligible"},
+      {"name": "Old Age Pension Yojana", "status": "Applied"},
+      {"name": "Senior Citizen Travel Subsidy", "status": "Eligible"},
+      {"name": "Varishtha Mediclaim Policy", "status": "Pending"},
+      {"name": "National Social Assistance Scheme", "status": "Eligible"},
+      {"name": "Indira Gandhi Pension Scheme", "status": "Not Eligible"},
+      {"name": "Senior Digital Literacy Program", "status": "New"},
+      {"name": "Home Visit Medical Support", "status": "Eligible"},
+    ],
+  };
+
+  final suggestionTags = [
+    "Scholarship",
+    "Women Empowerment",
+    "Farmer Benefits",
+    "Free Health Support",
+    "Housing Scheme",
   ];
 
   @override
@@ -136,6 +211,38 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
+  void _handleSearch(String query) {
+    if (query.trim().isEmpty) return;
+
+    // Save max 5 recent searches
+    if (!recentSearches.contains(query)) {
+      if (recentSearches.length >= 5) recentSearches.removeLast();
+      recentSearches.insert(0, query);
+    }
+
+    _searchController.clear();
+    FocusScope.of(context).unfocus();
+
+    // Redirect to schemes tab
+    setState(() => _selectedIndex = 1);
+
+    // Try matching scheme name
+    Future.delayed(const Duration(milliseconds: 500), () {
+      var match = schemeData.entries
+          .expand((e) => e.value)
+          .firstWhere(
+            (scheme) => (scheme['name'] as String).toLowerCase().contains(
+              query.toLowerCase(),
+            ),
+            orElse: () => <String, String>{},
+          );
+
+      _showSchemeDetails(match["name"] as String, match["status"] as String);
+    });
+
+    setState(() {});
+  }
+
   @override
   void dispose() {
     _entryController.dispose();
@@ -204,64 +311,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       {"name": "Jobs", "icon": Icons.work},
       {"name": "Seniors", "icon": Icons.elderly},
     ];
-
-    final schemeData = {
-      "Students": [
-        {"name": "National Scholarship Portal (NSP)", "status": "Eligible"},
-        {"name": "PM Scholar Merit Scholarship", "status": "Applied"},
-        {"name": "AICTE Pragati Scholarship", "status": "Eligible"},
-        {"name": "Digital India Internship", "status": "Applied"},
-        {"name": "PM YASASVI Scholarship", "status": "New"},
-        {"name": "UGC NET Fellowship Scheme", "status": "Eligible"},
-        {"name": "INSPIRE Science Scholarship", "status": "Pending"},
-        {"name": "EWS Education Subsidy", "status": "Not Eligible"},
-      ],
-
-      "Farmers": [
-        {"name": "PM Kisan Samman Nidhi", "status": "Eligible"},
-        {"name": "Soil Health Card Scheme", "status": "Eligible"},
-        {"name": "Pradhan Mantri Fasal Bima Yojana", "status": "Applied"},
-
-        {"name": "Paramparagat Krishi Vikas Yojana", "status": "Eligible"},
-        {"name": "Agriculture Infrastructure Fund", "status": "Not Eligible"},
-      ],
-
-      "Women": [
-        {"name": "Pradhan Mantri Ujjwala Yojana", "status": "Eligible"},
-        {"name": "Ladli Laxmi Yojana", "status": "Not Eligible"},
-        {"name": "PM Matru Vandana Yojana", "status": "Applied"},
-        {"name": "Self Help Group Loan Scheme", "status": "Eligible"},
-        {"name": "Mission Shakti Scheme", "status": "Pending"},
-        {"name": "Working Women Hostel Scheme", "status": "Eligible"},
-        {"name": "Sukanya Samriddhi Yojana", "status": "New"},
-        {"name": "Nari Samman Yojana", "status": "Eligible"},
-      ],
-
-      "Health": [
-        {"name": "Ayushman Bharat - PMJAY", "status": "Eligible"},
-        {"name": "Janani Suraksha Yojana", "status": "Applied"},
-        {"name": "E-Sanjeevani Online Consultation", "status": "Eligible"},
-      ],
-
-      "Jobs": [
-        {"name": "PM Skill India Training", "status": "Eligible"},
-        {"name": "Mudra Loan for Startups", "status": "Applied"},
-        {"name": "NAPS Apprenticeship Program", "status": "Eligible"},
-        {"name": "Agnipath Military Recruitment", "status": "Not Eligible"},
-        {"name": "PM Vishwakarma Scheme", "status": "New"},
-      ],
-
-      "Seniors": [
-        {"name": "Atal Pension Yojana", "status": "Eligible"},
-        {"name": "Old Age Pension Yojana", "status": "Applied"},
-        {"name": "Senior Citizen Travel Subsidy", "status": "Eligible"},
-        {"name": "Varishtha Mediclaim Policy", "status": "Pending"},
-        {"name": "National Social Assistance Scheme", "status": "Eligible"},
-        {"name": "Indira Gandhi Pension Scheme", "status": "Not Eligible"},
-        {"name": "Senior Digital Literacy Program", "status": "New"},
-        {"name": "Home Visit Medical Support", "status": "Eligible"},
-      ],
-    };
 
     final selectedCategory = categories[_selectedSchemeCategory]["name"];
     final schemes = schemeData[selectedCategory] ?? [];
@@ -484,9 +533,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
         const SizedBox(height: 5),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 26),
           child: Text(
-            "Track the real-time status of your government scheme applications",
+            "Track the status of your  scheme applications /आपकी योजनाओं की स्थिति देखें",
             style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
           ),
         ),
@@ -1192,29 +1241,125 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: "Search schemes, tasks, activities",
-          hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-          prefixIcon: const Icon(Icons.search),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 0,
-            vertical: 0,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFF015AA5), width: 1.3),
+    return Column(
+      children: [
+        // SEARCH FIELD
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Focus(
+            onFocusChange: (hasFocus) {
+              setState(() => _isSearchFocused = hasFocus);
+            },
+            child: TextField(
+              controller: _searchController,
+              onSubmitted: _handleSearch,
+              decoration: InputDecoration(
+                hintText: "Search schemes, benefits, tasks...",
+                hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 0,
+                  vertical: 0,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF015AA5),
+                    width: 1.4,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
-      ),
+
+        // RECENT SEARCH BOX (only visible when focused)
+        if (_isSearchFocused && recentSearches.isNotEmpty)
+          Container(
+            height: 140,
+            margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              itemCount: recentSearches.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.history, size: 18),
+                  title: Text(
+                    recentSearches[index],
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.close, size: 15),
+                    onPressed: () {
+                      setState(() => recentSearches.removeAt(index));
+                    },
+                  ),
+                  onTap: () => _handleSearch(recentSearches[index]),
+                );
+              },
+            ),
+          ),
+        if (_isSearchFocused)
+          Column(
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 6,
+                ),
+                child: Column(
+                  children: suggestionTags.take(5).map((tag) {
+                    return Column(
+                      children: [
+                        GestureDetector(
+                          onTap: () => _handleSearch(tag),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.search,
+                                size: 18,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  tag,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          height: 1,
+                          color: Colors.grey.withOpacity(0.2),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+      ],
     );
   }
 
@@ -1372,8 +1517,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 child: CircleAvatar(
                                   radius: 55,
                                   backgroundColor: Colors.white,
-                                  backgroundImage: const NetworkImage(
-                                    "https://i.postimg.cc/7ZqLXnXk/modi.jpg",
+                                  backgroundImage: const AssetImage(
+                                    "assets/modi.jpg",
                                   ),
                                   // replace with any public image you like
                                   onBackgroundImageError: (_, __) {},
