@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:unicef/loginsignup.dart';
 
-void main() {
+void main() async {
   runApp(const GovSchemesApp());
 }
 
