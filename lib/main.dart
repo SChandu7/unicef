@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:unicef/loginsignup.dart';
+ import 'package:url_launcher/url_launcher.dart';
+
 
 void main() async {
   runApp(const GovSchemesApp());
@@ -59,72 +61,97 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int _selectedSchemeCategory = 0;
 
   bool _isReady = false;
+final schemeData = {
+  "Infancy": [
+    {
+      "name": "Pradhan Mantri Matru Vandana Yojana (PMMVY)",
+      "status": "Eligible",
+      "link": "https://www.myscheme.gov.in/schemes/pmmvy?utm_source=chatgpt.com",
+      "desc":
+          "Provides ₹5,000 financial support to pregnant and lactating mothers to compensate wage loss and support nutrition."
+    },
+    {
+      "name": "Janani Suraksha Yojana (JSY)",
+      "status": "Applied",
+      "link": "https://nhm.gov.in/index1.php?lang=1&level=3&lid=309&sublinkid=841&utm_source=chatgpt.com",
+      "desc":
+          "Cash assistance for institutional delivery and maternal care, especially for BPL and SC/ST mothers."
+    },
+  ],
 
-  final schemeData = {
-    "Infancy": [
-      {
-        "name": "Pradhan Mantri Matru Vandana Yojana (PMMVY)",
-        "status": "Eligible",
-      },
-      {"name": "Janani Suraksha Yojana (JSY)", "status": "Applied"},
-    ],
+  "Childhood": [
+    {
+      "name": "Integrated Child Development Services (ICDS / Anganwadi)",
+      "status": "Eligible",
+      "link": "https://icds.gov.in/en/about-us?utm_source=chatgpt.com",
+      "desc":
+          "Provides nutrition, immunization, preschool education, and health check-ups to children (0–6 yrs) and mothers."
+    },
+    {
+      "name": "Mukhyamantri Suposhan Abhiyan (Chhattisgarh)",
+      "status": "Pending",
+      "link": "https://manendragarh-chirmiri-bharatpur.cg.gov.in/scheme/%E0%A4%AE%E0%A5%81%E0%A4%96%E0%A5%8D%E0%A4%AF%E0%A4%AE%E0%A4%82%E0%A4%A4%E0%A5%8D%E0%A4%B0%E0%A5%80-%E0%A4%B8%E0%A5%81%E0%A4%AA%E0%A5%8B%E0%A4%B7%E0%A4%A3-%E0%A4%85%E0%A4%AD%E0%A4%BF%E0%A4%AF%E0%A4%BE/?utm_source=chatgpt.com",
+      "desc":
+          "Free nutritious meals for malnourished children and anaemic women to eliminate malnutrition."
+    },
+  ],
 
-    "Childhood": [
-      {
-        "name":
-            "Integrated Child Development Services (ICDS / Anganwadi Services)",
-        "status": "Eligible",
-      },
-      {
-        "name": "Mukhyamantri Suposhan Abhiyan (Chhattisgarh)",
-        "status": "Pending",
-      },
-    ],
+  "Adulthood": [
+    {
+      "name": "Pradhan Mantri Kaushal Vikas Yojana (PMKVY)",
+      "status": "Eligible",
+      "link": "https://www.msde.gov.in/offerings/schemes-and-services/details/pradhan-mantri-kaushal-vikas-yojana-4-0-pmkvy-4-0-2021-ITO3ATMtQWa?utm_source=chatgpt.com",
+      "desc":
+          "Free skill training with certification to improve employability and job placement for youth."
+    },
+  ],
 
-    "Adulthood": [
-      {
-        "name": "Pradhan Mantri Kaushal Vikas Yojana (PMKVY)",
-        "status": "Eligible",
-      },
-      {"name": "National Scholarship Portal (NSP)", "status": "Eligible"},
-      {"name": "Digital India Internship", "status": "Applied"},
-      {"name": "PM YASASVI Scholarship", "status": "New"},
-      {"name": "INSPIRE Scholarship", "status": "Pending"},
-    ],
+  "Family": [
+    {
+      "name": "Pradhan Mantri Awas Yojana (Urban & Gramin)",
+      "status": "Eligible",
+      "link": "https://pmaymis.gov.in/?utm_source=chatgpt.com",
+      "desc":
+          "Financial assistance to build or upgrade pucca houses under Housing for All mission."
+    },
+    {
+      "name": "Ayushman Bharat - Jan Arogya Yojana (PMJAY)",
+      "status": "Applied",
+      "link": "https://nha-gov-in.translate.goog/PM-JAY?_x_tr_sl=en&_x_tr_tl=hi&_x_tr_hl=hi&_x_tr_pto=tc",
+      "desc":
+          "₹5 lakh free health insurance per family per year for eligible citizens in empanelled hospitals."
+    },
+  ],
 
-    "Family": [
-      {
-        "name": "Pradhan Mantri Awas Yojana (Urban & Gramin)",
-        "status": "Eligible",
-      },
-      {"name": "Ayushman Bharat - PM Jan Arogya Yojana", "status": "Applied"},
-    ],
+  "Farmers": [
+    {
+      "name": "PM Kisan Samman Nidhi",
+      "status": "Eligible",
+      "link": "https://www.digitalindia.gov.in/initiative/pm-kisan/?utm_source=chatgpt.com",
+      "desc":
+          "Direct income support of ₹6,000/year to small and marginal farmers credited in three instalments."
+    },
+    {
+      "name": "Rajiv Gandhi Kisan Nyay Yojana (Chhattisgarh)",
+      "status": "Eligible",
+      "link": "https://www.myscheme.gov.in/schemes/rgkny",
+      "desc":
+          "Financial support per acre to farmers for paddy and other notified crops to boost income."
+    },
+  ],
 
-    "Farmers": [
-      {"name": "PM Kisan Samman Nidhi", "status": "Eligible"},
-      {
-        "name": "Rajiv Gandhi Kisan Nyay Yojana (Chhattisgarh)",
-        "status": "Eligible",
-      },
-      {"name": "Pradhan Mantri Fasal Bima Yojana", "status": "Applied"},
-      {"name": "Paramparagat Krishi Vikas Yojana", "status": "Pending"},
-    ],
+  "Old Age": [
+    {
+      "name": "Indira Gandhi National Old Age Pension Scheme (IGNOAPS)",
+      "status": "Eligible",
+      "link": "https://www.myscheme.gov.in/schemes/nsap-ignoaps?utm_source=chatgpt.com",
+      "desc":
+          "Monthly pension for BPL citizens aged 60+ to provide financial security in old age."
+    },
+  ],
+};
 
-    "Old age": [
-      {
-        "name": "Indira Gandhi National Old Age Pension Scheme (IGNOAPS)",
-        "status": "Eligible",
-      },
-      {
-        "name": "National Social Assistance Programme (NSAP)",
-        "status": "Pending",
-      },
-      {
-        "name": "Varishta Health / Medical Insurance Support",
-        "status": "Not Eligible",
-      },
-    ],
-  };
+
 
   final List<String> _bannerTitles = [
     "Mann Ki Baat - Join Live",
@@ -245,7 +272,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             orElse: () => <String, String>{},
           );
 
-      _showSchemeDetails(match["name"] as String, match["status"] as String);
+      _showSchemeDetails(schemeData);
     });
 
     setState(() {});
@@ -297,9 +324,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 _buildQuickActions(),
                 const SizedBox(height: 8),
                 _buildStatsRow(),
-                const SizedBox(height: 18),
+                const SizedBox(height: 2),
+                _buildVerticalAnnouncement(),
+                const SizedBox(height: 10),
                 _buildGetInvolvedCard(),
                 const SizedBox(height: 18),
+              
                 _buildOurSchemesSection(),
                 const SizedBox(height: 22),
               ],
@@ -316,8 +346,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       {"name": "Childhood", "icon": Icons.agriculture},
       {"name": "Adulthood", "icon": Icons.woman},
       {"name": "Family", "icon": Icons.health_and_safety},
-      {"name": "Old age", "icon": Icons.work},
-      {"name": "Farmer", "icon": Icons.elderly},
+      {"name": "Old Age", "icon": Icons.work},
+      {"name": "Farmers", "icon": Icons.elderly},
     ];
 
     final selectedCategory = categories[_selectedSchemeCategory]["name"];
@@ -420,10 +450,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       final col = statusColor(status!);
 
                       return GestureDetector(
-                        onTap: () => _showSchemeDetails(
-                          scheme["name"] as String,
-                          status,
-                        ),
+                        onTap: () => _showSchemeDetails(scheme),
+
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 250),
                           curve: Curves.easeOut,
@@ -469,24 +497,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       ),
                                     ),
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: col.withOpacity(0.12),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      status,
-                                      style: TextStyle(
-                                        color: col,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
+                                  
                                 ],
                               ),
 
@@ -505,24 +516,50 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                               const SizedBox(height: 10),
 
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.info_outline,
-                                    size: 16,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    "Tap to view details",
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey.shade600,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                         Row(
+  children: [
+    Icon(
+      Icons.info_outline,
+      size: 16,
+      color: Colors.grey.shade500,
+    ),
+    const SizedBox(width: 6),
+
+    Expanded(
+      child: Text(
+        "Tap to view details",
+        style: TextStyle(
+          fontSize: 11,
+          color: Colors.grey.shade600,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ),
+
+    // Spacing before status badge
+    const SizedBox(width: 6),
+
+    Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        color: col.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+          color: col,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  ],
+),
+
                             ],
                           ),
                         ),
@@ -841,180 +878,175 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  void _showSchemeDetails(String title, String status) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.65,
-          minChildSize: 0.45,
-          maxChildSize: 0.92,
-          expand: false,
-          builder: (context, scrollController) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
-              child: ListView(
-                controller: scrollController,
-                children: [
-                  // 🔹 Drag Handle
-                  Center(
-                    child: Container(
-                      width: 55,
-                      height: 5,
-                      margin: const EdgeInsets.only(bottom: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade400,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                  ),
 
-                  // 🔹 Title
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
+void _showSchemeDetails(Map<String, dynamic> scheme) async {
+  final String title = scheme["name"];
+  final String status = scheme["status"];
+  final String desc = scheme["desc"];
+  final String link = scheme["link"] ?? "";
 
-                  const SizedBox(height: 6),
-
-                  // 🔹 Status Tag
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 11,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(status).withOpacity(0.16),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      status,
-                      style: TextStyle(
-                        color: _getStatusColor(status),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.5,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  // 🔹 Overview
-                  const Text(
-                    "📌 Scheme Overview",
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    "This scheme provides financial or service-based benefits to eligible citizens. The goal is to support education, welfare, livelihood, and growth depending on the user category.",
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      height: 1.45,
-                      color: Colors.black.withOpacity(0.75),
-                    ),
-                  ),
-
-                  const SizedBox(height: 22),
-
-                  // 🔹 Eligibility
-                  const Text(
-                    "✔ Eligibility Criteria",
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 6),
-                  _bullet("- Indian Citizen"),
-                  _bullet("- Aadhaar linked bank account"),
-                  _bullet("- Income / age criteria may apply"),
-                  _bullet("- State-wise eligibility variations"),
-
-                  const SizedBox(height: 22),
-
-                  // 🔹 Required Documents
-                  const Text(
-                    "📄 Required Documents",
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 6),
-                  _bullet("- Aadhaar Card"),
-                  _bullet("- Income Certificate"),
-                  _bullet("- Bank Passbook"),
-                  _bullet("- Address Proof"),
-                  _bullet("- Passport Size Photo"),
-
-                  const SizedBox(height: 26),
-
-                  // 🔹 Apply Button
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF015AA5),
-                      minimumSize: const Size(double.infinity, 52),
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: const Text(
-                      "Apply Now",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // 🔹 Link Button
-                  Center(
-                    child: TextButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.open_in_new, size: 18),
-                      label: const Text(
-                        "Visit Official Website",
-                        style: TextStyle(fontSize: 13.5),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
+  Color statusColor(String status) {
+    switch (status) {
+      case "Eligible":
+        return Color(0xFF2E7D32);
+      case "Applied":
+        return Color(0xFF1976D2);
+      case "Pending":
+        return Color(0xFFFFA000);
+      case "Not Eligible":
+        return Color(0xFFD32F2F);
+      case "New":
+        return Color(0xFF673AB7);
+      default:
+        return Colors.grey;
+    }
   }
 
-  Widget _bullet(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          const Icon(Icons.circle, size: 6, color: Colors.black54),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 13.5,
-                height: 1.35,
-                color: Colors.black.withOpacity(0.75),
+  Future<void> launchURL() async {
+  final Uri uri = Uri.parse(link);
+
+  if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    throw Exception("Could not launch $uri");
+  }
+}
+
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+    builder: (_) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 30),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Drag Bar
+            Center(
+              child: Container(
+                height: 5,
+                width: 50,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade400,
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
             ),
+            const SizedBox(height: 14),
+
+            // Title
+            Text(
+              title,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            ),
+
+            const SizedBox(height: 6),
+
+            // Status Badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: statusColor(status).withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                status,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: statusColor(status),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 18),
+
+            // Description
+            const Text(
+              "📌 Scheme Overview",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 6),
+
+            Text(
+              desc,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey.shade700,
+                height: 1.3,
+              ),
+            ),
+
+            const SizedBox(height: 18),
+
+            const Text(
+              "✔ Eligibility Criteria",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 6),
+
+            _bullet("- Indian Citizen"),
+            _bullet("- Aadhaar required"),
+            _bullet("- Income criteria may apply"),
+            _bullet("- Age requirements vary per scheme"),
+
+            const SizedBox(height: 22),
+
+            // Apply Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: link.isNotEmpty ? launchURL : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF015AA5),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  "Apply Now",
+                  style: TextStyle(fontSize: 15, color: Colors.white),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // Official Website Text Button
+            if (link.isNotEmpty)
+              Center(
+                child: TextButton.icon(
+                  onPressed: launchURL,
+                  icon: const Icon(Icons.open_in_browser),
+                  label: const Text("Open Official Website"),
+                ),
+              ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+Widget _bullet(String text) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("•  ", style: TextStyle(fontSize: 14)),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 13),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
@@ -1800,58 +1832,194 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildStatCard({
-    required String value,
-    required String label,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      height: 82,
+ Widget _buildStatCard({
+  required String value,
+  required String label,
+  required IconData icon,
+  required Color color,
+}) {
+  return Column(
+    children: [
+      // 🔹 Original Stat Container
+      Container(
+        height: 82,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 5,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: color.withOpacity(0.12),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+
+      const SizedBox(height: 10),
+
+      // 🔹 Vertical Auto Scrolling Announcement
+      
+    ],
+  );
+}
+
+
+
+Widget _buildVerticalAnnouncement() {
+  final List<String> announcements = [
+    "📌 New Scholarship Applications Open — Apply Before Dec 15.",
+    "📌 नई छात्रवृत्ति आवेदन प्रक्रिया शुरू — अंतिम तिथि: 15 दिसंबर।",
+
+    "📌 PM Awas Yojana Beneficiary List Released — Check Now.",
+    "📌 प्रधानमंत्री आवास योजना लाभार्थी सूची जारी — अभी देखें।",
+
+    "📌 Free Govt. Skill Development Training Starts Next Week.",
+    "📌 निःशुल्क सरकारी कौशल विकास प्रशिक्षण अगले सप्ताह से शुरू।",
+
+    "📌 Ayushman Bharat Card Verification Required Immediately.",
+    "📌 आयुष्मान भारत कार्ड सत्यापन आवश्यक — तुरंत पूरा करें।",
+
+    "📌 Kisan Samman Nidhi 16th Installment Released.",
+    "📌 किसान सम्मान निधि की 16वीं किश्त जारी कर दी गई है।",
+  ];
+
+  // group into pairs (ENG + HINDI)
+  final List<List<String>> grouped = [];
+  for (int i = 0; i < announcements.length; i += 2) {
+    grouped.add([
+      announcements[i],
+      announcements[i + 1],
+    ]);
+  }
+
+  final PageController controller = PageController();
+  final int totalSlides = grouped.length;
+
+  // 🔄 Auto scroll every 3 seconds
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (controller.hasClients) {
+        final nextPage = (controller.page!.round() + 1) % totalSlides;
+        controller.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  });
+
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 14),
+    child: Container(
+      height: 125,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade300, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 5,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
             offset: const Offset(0, 3),
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: color.withOpacity(0.12),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
-                ),
-              ],
+          // 🔔 Icon
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF015AA5).withOpacity(0.15),
+              shape: BoxShape.circle,
             ),
+            child: const Icon(Icons.campaign, color: Color(0xFF015AA5), size: 20),
           ),
+
+          const SizedBox(width: 14),
+
+          // 🚫 Disable manual scroll
+          Expanded(
+            child: IgnorePointer(
+              ignoring: true,
+              child: PageView.builder(
+                controller: controller,
+                scrollDirection: Axis.vertical,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: grouped.length,
+                itemBuilder: (_, index) {
+                  final pair = grouped[index];
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        pair[0], // English
+                        maxLines: 2,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          height: 1.25,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        pair[1], // Hindi
+                        maxLines: 2,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.30,
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          )
         ],
       ),
-    );
-  }
+    ),
+  );
+}
+
+
 
   Widget _buildGetInvolvedCard() {
     final items = [
@@ -1929,6 +2097,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
   }
+
+
+
+
+
 
   Widget _buildOurSchemesSection() {
     final schemes = [
