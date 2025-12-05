@@ -60,6 +60,72 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   bool _isReady = false;
 
+  final schemeData = {
+    "Infancy": [
+      {
+        "name": "Pradhan Mantri Matru Vandana Yojana (PMMVY)",
+        "status": "Eligible",
+      },
+      {"name": "Janani Suraksha Yojana (JSY)", "status": "Applied"},
+    ],
+
+    "Childhood": [
+      {
+        "name":
+            "Integrated Child Development Services (ICDS / Anganwadi Services)",
+        "status": "Eligible",
+      },
+      {
+        "name": "Mukhyamantri Suposhan Abhiyan (Chhattisgarh)",
+        "status": "Pending",
+      },
+    ],
+
+    "Adulthood": [
+      {
+        "name": "Pradhan Mantri Kaushal Vikas Yojana (PMKVY)",
+        "status": "Eligible",
+      },
+      {"name": "National Scholarship Portal (NSP)", "status": "Eligible"},
+      {"name": "Digital India Internship", "status": "Applied"},
+      {"name": "PM YASASVI Scholarship", "status": "New"},
+      {"name": "INSPIRE Scholarship", "status": "Pending"},
+    ],
+
+    "Family": [
+      {
+        "name": "Pradhan Mantri Awas Yojana (Urban & Gramin)",
+        "status": "Eligible",
+      },
+      {"name": "Ayushman Bharat - PM Jan Arogya Yojana", "status": "Applied"},
+    ],
+
+    "Farmers": [
+      {"name": "PM Kisan Samman Nidhi", "status": "Eligible"},
+      {
+        "name": "Rajiv Gandhi Kisan Nyay Yojana (Chhattisgarh)",
+        "status": "Eligible",
+      },
+      {"name": "Pradhan Mantri Fasal Bima Yojana", "status": "Applied"},
+      {"name": "Paramparagat Krishi Vikas Yojana", "status": "Pending"},
+    ],
+
+    "Old age": [
+      {
+        "name": "Indira Gandhi National Old Age Pension Scheme (IGNOAPS)",
+        "status": "Eligible",
+      },
+      {
+        "name": "National Social Assistance Programme (NSAP)",
+        "status": "Pending",
+      },
+      {
+        "name": "Varishta Health / Medical Insurance Support",
+        "status": "Not Eligible",
+      },
+    ],
+  };
+
   final List<String> _bannerTitles = [
     "Mann Ki Baat - Join Live",
     "मन की बात - सीधा प्रसारण",
@@ -70,64 +136,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     "Women Empowerment Yojana",
     "महिला सशक्तिकरण योजना",
   ];
-
-  final schemeData = {
-    "Students": [
-      {"name": "National Scholarship Portal (NSP)", "status": "Eligible"},
-      {"name": "PM Scholar Merit Scholarship", "status": "Applied"},
-      {"name": "AICTE Pragati Scholarship", "status": "Eligible"},
-      {"name": "Digital India Internship", "status": "Applied"},
-      {"name": "PM YASASVI Scholarship", "status": "New"},
-      {"name": "UGC NET Fellowship Scheme", "status": "Eligible"},
-      {"name": "INSPIRE Science Scholarship", "status": "Pending"},
-      {"name": "EWS Education Subsidy", "status": "Not Eligible"},
-    ],
-
-    "Farmers": [
-      {"name": "PM Kisan Samman Nidhi", "status": "Eligible"},
-      {"name": "Soil Health Card Scheme", "status": "Eligible"},
-      {"name": "Pradhan Mantri Fasal Bima Yojana", "status": "Applied"},
-
-      {"name": "Paramparagat Krishi Vikas Yojana", "status": "Eligible"},
-      {"name": "Agriculture Infrastructure Fund", "status": "Not Eligible"},
-    ],
-
-    "Women": [
-      {"name": "Pradhan Mantri Ujjwala Yojana", "status": "Eligible"},
-      {"name": "Ladli Laxmi Yojana", "status": "Not Eligible"},
-      {"name": "PM Matru Vandana Yojana", "status": "Applied"},
-      {"name": "Self Help Group Loan Scheme", "status": "Eligible"},
-      {"name": "Mission Shakti Scheme", "status": "Pending"},
-      {"name": "Working Women Hostel Scheme", "status": "Eligible"},
-      {"name": "Sukanya Samriddhi Yojana", "status": "New"},
-      {"name": "Nari Samman Yojana", "status": "Eligible"},
-    ],
-
-    "Health": [
-      {"name": "Ayushman Bharat - PMJAY", "status": "Eligible"},
-      {"name": "Janani Suraksha Yojana", "status": "Applied"},
-      {"name": "E-Sanjeevani Online Consultation", "status": "Eligible"},
-    ],
-
-    "Jobs": [
-      {"name": "PM Skill India Training", "status": "Eligible"},
-      {"name": "Mudra Loan for Startups", "status": "Applied"},
-      {"name": "NAPS Apprenticeship Program", "status": "Eligible"},
-      {"name": "Agnipath Military Recruitment", "status": "Not Eligible"},
-      {"name": "PM Vishwakarma Scheme", "status": "New"},
-    ],
-
-    "Seniors": [
-      {"name": "Atal Pension Yojana", "status": "Eligible"},
-      {"name": "Old Age Pension Yojana", "status": "Applied"},
-      {"name": "Senior Citizen Travel Subsidy", "status": "Eligible"},
-      {"name": "Varishtha Mediclaim Policy", "status": "Pending"},
-      {"name": "National Social Assistance Scheme", "status": "Eligible"},
-      {"name": "Indira Gandhi Pension Scheme", "status": "Not Eligible"},
-      {"name": "Senior Digital Literacy Program", "status": "New"},
-      {"name": "Home Visit Medical Support", "status": "Eligible"},
-    ],
-  };
 
   final suggestionTags = [
     "Scholarship",
@@ -304,12 +312,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Widget _buildSchemesPage() {
     final categories = [
-      {"name": "Students", "icon": Icons.school},
-      {"name": "Farmers", "icon": Icons.agriculture},
-      {"name": "Women", "icon": Icons.woman},
-      {"name": "Health", "icon": Icons.health_and_safety},
-      {"name": "Jobs", "icon": Icons.work},
-      {"name": "Seniors", "icon": Icons.elderly},
+      {"name": "Infancy", "icon": Icons.school},
+      {"name": "Childhood", "icon": Icons.agriculture},
+      {"name": "Adulthood", "icon": Icons.woman},
+      {"name": "Family", "icon": Icons.health_and_safety},
+      {"name": "Old age", "icon": Icons.work},
+      {"name": "Farmer", "icon": Icons.elderly},
     ];
 
     final selectedCategory = categories[_selectedSchemeCategory]["name"];
@@ -399,6 +407,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
 
               // RIGHT SIDE — SCHEMES SECTION
+              // RIGHT SIDE — SCHEMES SECTION
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(right: 12),
@@ -415,54 +424,104 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           scheme["name"] as String,
                           status,
                         ),
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 14),
-                          padding: const EdgeInsets.all(16),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeOut,
+                          margin: const EdgeInsets.only(bottom: 18),
+                          padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: col.withOpacity(0.2),
+                              width: 1,
+                            ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 6,
-                                offset: const Offset(0, 3),
+                                color: Colors.black.withOpacity(0.06),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
                               ),
                             ],
                           ),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              CircleAvatar(
-                                radius: 22,
-                                backgroundColor: col.withOpacity(0.15),
-                                child: Icon(Icons.description, color: col),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Text(
-                                  scheme["name"] as String,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
+                              // 🔹 Title & Badge Row
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 22,
+                                    backgroundColor: col.withOpacity(0.13),
+                                    child: Icon(
+                                      Icons.assured_workload,
+                                      color: col,
+                                    ),
                                   ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Text(
+                                      scheme["name"] as String,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: col.withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      status,
+                                      style: TextStyle(
+                                        color: col,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 10),
+
+                              // 🔹 Short description (auto assigned)
+                              Text(
+                                scheme["desc"] ??
+                                    "Tap to view eligibility, benefits & how to apply.",
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  height: 1.35,
+                                  color: Colors.grey.shade700,
                                 ),
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: col.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                child: Text(
-                                  status,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: col,
+
+                              const SizedBox(height: 10),
+
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    size: 16,
+                                    color: Colors.grey.shade500,
                                   ),
-                                ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    "Tap to view details",
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade600,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -786,139 +845,174 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       backgroundColor: Colors.white,
-      builder: (_) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 30),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Drag Handle
-                Center(
-                  child: Container(
-                    height: 5,
-                    width: 50,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.65,
+          minChildSize: 0.45,
+          maxChildSize: 0.92,
+          expand: false,
+          builder: (context, scrollController) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
+              child: ListView(
+                controller: scrollController,
+                children: [
+                  // 🔹 Drag Handle
+                  Center(
+                    child: Container(
+                      width: 55,
+                      height: 5,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade400,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
+
+                  // 🔹 Title
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  // 🔹 Status Tag
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade400,
-                      borderRadius: BorderRadius.circular(20),
+                      color: _getStatusColor(status).withOpacity(0.16),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      status,
+                      style: TextStyle(
+                        color: _getStatusColor(status),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.5,
+                      ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 14),
+                  const SizedBox(height: 18),
 
-                // Title
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+                  // 🔹 Overview
+                  const Text(
+                    "📌 Scheme Overview",
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                   ),
-                ),
-
-                const SizedBox(height: 6),
-
-                // Status Tag
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(status).withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    status,
+                  const SizedBox(height: 6),
+                  Text(
+                    "This scheme provides financial or service-based benefits to eligible citizens. The goal is to support education, welfare, livelihood, and growth depending on the user category.",
                     style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: _getStatusColor(status),
+                      fontSize: 13.5,
+                      height: 1.45,
+                      color: Colors.black.withOpacity(0.75),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 16),
+                  const SizedBox(height: 22),
 
-                // Description
-                const Text(
-                  "📌 Scheme Overview",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  "This scheme aims to provide benefits to eligible citizens by supporting education, financial aid, and welfare depending on the scheme category.",
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade700,
-                    height: 1.3,
+                  // 🔹 Eligibility
+                  const Text(
+                    "✔ Eligibility Criteria",
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                   ),
-                ),
+                  const SizedBox(height: 6),
+                  _bullet("- Indian Citizen"),
+                  _bullet("- Aadhaar linked bank account"),
+                  _bullet("- Income / age criteria may apply"),
+                  _bullet("- State-wise eligibility variations"),
 
-                const SizedBox(height: 18),
+                  const SizedBox(height: 22),
 
-                // Eligibility Section
-                const Text(
-                  "✔ Eligibility Criteria",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 6),
-                _bullet("- Indian Citizen"),
-                _bullet("- Aadhaar required"),
-                _bullet("- Income criteria may apply"),
-                _bullet("- Age and education requirements vary"),
+                  // 🔹 Required Documents
+                  const Text(
+                    "📄 Required Documents",
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 6),
+                  _bullet("- Aadhaar Card"),
+                  _bullet("- Income Certificate"),
+                  _bullet("- Bank Passbook"),
+                  _bullet("- Address Proof"),
+                  _bullet("- Passport Size Photo"),
 
-                const SizedBox(height: 18),
+                  const SizedBox(height: 26),
 
-                // Required Documents
-                const Text(
-                  "📄 Required Documents",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 6),
-                _bullet("- Aadhaar Card"),
-                _bullet("- Income Certificate"),
-                _bullet("- Bank Passbook"),
-                _bullet("- Passport size photo"),
-                _bullet("- Address proof"),
-
-                const SizedBox(height: 22),
-
-                // Apply Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
+                  // 🔹 Apply Button
+                  ElevatedButton(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF015AA5),
-                      padding: EdgeInsets.symmetric(vertical: 12),
+                      minimumSize: const Size(double.infinity, 52),
+                      elevation: 2,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     child: const Text(
                       "Apply Now",
-                      style: TextStyle(fontSize: 15, color: Colors.white),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 10),
+                  const SizedBox(height: 10),
 
-                // Optional Link Button
-                TextButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.open_in_new, size: 18),
-                  label: const Text("View Official Website"),
-                ),
-              ],
-            ),
-          ),
+                  // 🔹 Link Button
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () {},
+                      icon: const Icon(Icons.open_in_new, size: 18),
+                      label: const Text(
+                        "Visit Official Website",
+                        style: TextStyle(fontSize: 13.5),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
+    );
+  }
+
+  Widget _bullet(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          const Icon(Icons.circle, size: 6, color: Colors.black54),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 13.5,
+                height: 1.35,
+                color: Colors.black.withOpacity(0.75),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -935,18 +1029,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  Widget _bullet(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("• ", style: TextStyle(fontSize: 14)),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
-        ],
-      ),
-    );
-  }
+  // Widget _bullet(String text) {
+  //   return Padding(
+  //     padding: const EdgeInsets.only(bottom: 4),
+  //     child: Row(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         const Text("• ", style: TextStyle(fontSize: 14)),
+  //         Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   // ------------------ WIDGETS -------------------------
 
