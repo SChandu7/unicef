@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:unicef/loginsignup.dart';
  import 'package:url_launcher/url_launcher.dart';
 
-
 void main() async {
   runApp(const GovSchemesApp());
 }
@@ -33,9 +32,6 @@ class HomePage extends StatefulWidget {
   @override
   State<HomePage> createState() => _HomePageState();
 }
- // Change this to your actual HomeScreen import
-
-
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -132,19 +128,13 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-
-
-
-
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late final AnimationController _entryController;
-  late final Animation<double> _fadeAnimation;
-  late final Animation<Offset> _slideAnimation;
   late AnimationController _marqueeController;
   late Animation<double> _marqueeAnimation;
   // Store recent searches
   List<String> recentSearches = [];
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   bool _isSearchFocused = false;
 
   int _langIndex = 0;
@@ -279,16 +269,15 @@ final schemeData = {
 };
 
 
-
   final List<String> _bannerTitles = [
-    "Mann Ki Baat - Join Live",
-    "मन की बात - सीधा प्रसारण",
+    "PM Matru Vandana \n Yojana (PMMVY)",
+    "आयुष्मान भारत - जन \n आरोग्य योजना (PMJAY)",
 
-    "New Scholarship Schemes",
-    "नई छात्रवृत्ति योजनाएँ",
+    "Janani Suraksha \n Yojana (JSY)",
+    "प्रधान मंत्री किसान \n सम्मान निधि",
 
-    "Women Empowerment Yojana",
-    "महिला सशक्तिकरण योजना",
+    "Rajiv Gandhi Kisan Nyay\n Yojana (Chhattisgarh)",
+    "एकीकृत बाल विकास \n सेवाएँ (ICDS / आंगनवाड़ी)",
   ];
 
   final suggestionTags = [
@@ -339,15 +328,6 @@ final schemeData = {
       duration: const Duration(milliseconds: 700),
     );
 
-    _fadeAnimation = CurvedAnimation(
-      parent: _entryController,
-      curve: Curves.easeOut,
-    );
-
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, -0.06), end: Offset.zero).animate(
-          CurvedAnimation(parent: _entryController, curve: Curves.easeOutCubic),
-        );
 
     // Carousel auto scroll
     _pageController = PageController();
@@ -358,6 +338,16 @@ final schemeData = {
       setState(() => _isReady = true);
     });
   }
+
+final List<String> _carouselImages = [
+  "assets/1.jpeg",
+  "assets/2.jpeg",
+  "assets/3.jpeg",
+  "assets/4.jpeg",
+  "assets/5.jpeg",
+  "assets/modi.jpg",
+];
+
 
   void _startBannerAutoScroll() {
     _bannerTimer?.cancel();
@@ -419,12 +409,39 @@ final schemeData = {
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: _buildBottomNavBar(),
+      
       body: SafeArea(
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
           child: _isReady ? _screens[_selectedIndex]() : SizedBox(),
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+      backgroundColor: const Color(0xFF015AA5),
+      elevation: 6,
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (_) {
+            return AlertDialog(
+              title: const Text("Need Help?"),
+              content: const Text(
+                  "Tell us what issue you are facing or what help you need."),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Close"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      child: const Icon(Icons.help_outline, size: 28, color: Colors.white),
+    ),
+
+    floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      
     );
   }
 
@@ -1157,6 +1174,15 @@ void _showSchemeDetails(Map<String, dynamic> scheme) async {
   );
 }
 
+void goToSchemesCategory(String categoryName) {
+  final categories = ["Infancy", "Childhood", "Adulthood", "Family", "Old Age", "Farmers"];
+
+  setState(() {
+    _selectedIndex = 1; // navigate to Schemes tab
+    _selectedSchemeCategory = categories.indexOf(categoryName);
+  });
+}
+
 Widget _bullet(String text) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 4),
@@ -1175,18 +1201,6 @@ Widget _bullet(String text) {
   );
 }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case "eligible":
-        return Colors.green;
-      case "applied":
-        return Colors.orange;
-      case "not eligible":
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
 
   // ------------------ WIDGETS -------------------------
 
@@ -1676,25 +1690,32 @@ Widget _bullet(String text) {
   }
 
   Widget _buildCarousel() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Column(
-        children: [
-          AspectRatio(
-            aspectRatio: 16 / 9,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  PageView.builder(
-                    controller: _pageController,
-                    itemCount: _bannerTitles.length,
-                    onPageChanged: (i) {
-                      setState(() => _currentBanner = i);
-                    },
-                    itemBuilder: (context, index) {
-                      return Container(
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 14),
+    child: Column(
+      children: [
+        AspectRatio(
+          aspectRatio: 16 / 9,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                PageView.builder(
+                  controller: _pageController,
+                  itemCount: _bannerTitles.length,
+                  onPageChanged: (i) {
+                    setState(() => _currentBanner = i);
+                  },
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () {
+                      setState(() {
+  _selectedIndex = 1;  // <-- Index of Schemes tab
+});
+
+                      },
+                      child: Container(
                         decoration: const BoxDecoration(
                           gradient: LinearGradient(
                             colors: [Color(0xFF0C5AA6), Color(0xFF022B5B)],
@@ -1721,40 +1742,10 @@ Widget _bullet(String text) {
                                   ),
                                   const SizedBox(height: 6),
                                   const Text(
-                                    "30th Nov 2025 • 11:00 AM\nWatch live and participate.",
+                                    "Recent Schemes  \n Tap here For Full Details .",
                                     style: TextStyle(
                                       color: Colors.white70,
                                       fontSize: 11,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.redAccent,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: const [
-                                        Icon(
-                                          Icons.play_arrow,
-                                          color: Colors.white,
-                                          size: 16,
-                                        ),
-                                        SizedBox(width: 4),
-                                        Text(
-                                          "WATCH LIVE",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
                                     ),
                                   ),
                                 ],
@@ -1767,167 +1758,50 @@ Widget _bullet(String text) {
                                 child: CircleAvatar(
                                   radius: 55,
                                   backgroundColor: Colors.white,
-                                  backgroundImage: const AssetImage(
-                                    "assets/modi.jpg",
+                                  backgroundImage: AssetImage(
+                                    _carouselImages[index], // if using images array
                                   ),
-                                  // replace with any public image you like
-                                  onBackgroundImageError: (_, __) {},
                                 ),
                               ),
                             ),
                           ],
                         ),
-                      );
-                    },
-                  ),
-                  Positioned(
-                    bottom: 8,
-                    left: 0,
-                    right: 0,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        _bannerTitles.length,
-                        (i) => AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
-                          height: 6,
-                          width: _currentBanner == i ? 18 : 7,
-                          decoration: BoxDecoration(
-                            color: _currentBanner == i
-                                ? Colors.white
-                                : Colors.white54,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                      ),
+                    );
+                  },
+                ),
+
+                Positioned(
+                  bottom: 8,
+                  left: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      _bannerTitles.length,
+                      (i) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        height: 6,
+                        width: _currentBanner == i ? 18 : 7,
+                        decoration: BoxDecoration(
+                          color: _currentBanner == i
+                              ? Colors.white
+                              : Colors.white54,
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHorizontalCards() {
-    final cards = [
-      {
-        "title": "Join MyGov on WhatsApp",
-        "tag": "LATEST",
-        "color": const Color(0xFF0A7E3D),
-        "icon": Icons.chat_bubble_outline,
-      },
-      {
-        "title": "MyGov Pulse Newsletter",
-        "tag": "LATEST",
-        "color": const Color(0xFF015AA5),
-        "icon": Icons.mail_outline,
-      },
-      {
-        "title": "MyGov Saathi - build India",
-        "tag": "FEATURED",
-        "color": const Color(0xFFEE6B2D),
-        "icon": Icons.people_outline,
-      },
-    ];
-
-    return SizedBox(
-      height: 150,
-      child: ListView.builder(
-        padding: const EdgeInsets.only(left: 14),
-        scrollDirection: Axis.horizontal,
-        itemCount: cards.length,
-        physics: const BouncingScrollPhysics(),
-        itemBuilder: (context, index) {
-          final card = cards[index];
-          return Container(
-            width: 190,
-            margin: const EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 70,
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(14),
-                    ),
-                    gradient: LinearGradient(
-                      colors: [
-                        (card["color"] as Color).withOpacity(0.9),
-                        (card["color"] as Color).withOpacity(0.7),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      card["icon"] as IconData,
-                      color: Colors.white,
-                      size: 30,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                  child: Text(
-                    card["title"] as String,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF5FF),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      card["tag"] as String,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF015AA5),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildStatsRow() {
     return Padding(
@@ -1956,7 +1830,7 @@ Widget _bullet(String text) {
     );
   }
 
- Widget _buildStatCard({
+  Widget _buildStatCard({
   required String value,
   required String label,
   required IconData icon,
@@ -2020,8 +1894,7 @@ Widget _bullet(String text) {
 }
 
 
-
-Widget _buildVerticalAnnouncement() {
+  Widget _buildVerticalAnnouncement() {
   final List<String> announcements = [
     "📌 New Scholarship Applications Open — Apply Before Dec 15.",
     "📌 नई छात्रवृत्ति आवेदन प्रक्रिया शुरू — अंतिम तिथि: 15 दिसंबर।",
@@ -2144,7 +2017,6 @@ Widget _buildVerticalAnnouncement() {
 }
 
 
-
   Widget _buildGetInvolvedCard() {
     final items = [
       {"icon": Icons.check_box_outlined, "label": "Do/Task"},
@@ -2223,7 +2095,7 @@ Widget _buildVerticalAnnouncement() {
   }
 
 
-void _showNotificationPanel() {
+  void _showNotificationPanel() {
   showGeneralDialog(
     context: context,
     barrierDismissible: true,
@@ -2385,9 +2257,7 @@ void _showNotificationPanel() {
 }
 
 
-
-
-  Widget _buildOurSchemesSection() {
+   Widget _buildOurSchemesSection() {
     final schemes = [
       {
         "label": "For Students",
@@ -2456,38 +2326,78 @@ void _showNotificationPanel() {
               mainAxisSpacing: 12,
               childAspectRatio: 0.8,
             ),
-            itemBuilder: (context, index) {
-              final item = schemes[index];
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    height: 44,
-                    width: 44,
-                    decoration: BoxDecoration(
-                      color: (item["color"] as Color).withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(
-                      item["icon"] as IconData,
-                      color: item["color"] as Color,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item["label"] as String,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              );
-            },
+           itemBuilder: (context, index) {
+  final item = schemes[index];
+
+  return GestureDetector(
+    onTap: () {
+      // match category with schemes page category names
+      String matchedCategory = "";
+
+      switch(item["label"]) {
+        case "For Students":
+          matchedCategory = "Adulthood";
+          break;
+        case "For Farmers":
+          matchedCategory = "Farmers";
+          break;
+        case "For Women":
+          matchedCategory = "Adulthood";
+          break;
+        case "Health & Care":
+          matchedCategory = "Family";
+          break;
+        case "Jobs & Skills":
+          matchedCategory = "Adulthood";
+          break;
+        case "Housing":
+          matchedCategory = "Family";
+          break;
+        case "Senior Citizens":
+          matchedCategory = "Old Age";
+          break;
+        default:
+          matchedCategory = "Infancy";
+      }
+
+      goToSchemesCategory(matchedCategory);
+    },
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          height: 44,
+          width: 44,
+          decoration: BoxDecoration(
+            color: (item["color"] as Color).withOpacity(0.12),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(
+            item["icon"] as IconData,
+            color: item["color"] as Color,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          item["label"] as String,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    ),
+  );
+},
+
           ),
         ],
       ),
     );
+ 
   }
+
+
 }
+
