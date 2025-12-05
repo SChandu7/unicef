@@ -14,7 +14,7 @@ class GovSchemesApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Gov Schemes',
+      title: 'GovtS Schemes',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: const Color(0xFF015AA5),
@@ -22,7 +22,7 @@ class GovSchemesApp extends StatelessWidget {
         fontFamily: 'Poppins',
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: const SplashScreen(),
     );
   }
 }
@@ -33,6 +33,108 @@ class HomePage extends StatefulWidget {
   @override
   State<HomePage> createState() => _HomePageState();
 }
+ // Change this to your actual HomeScreen import
+
+
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.6, end: 1.3)
+        .animate(CurvedAnimation(curve: Curves.easeOutBack, parent: _controller));
+
+    _fadeAnimation = Tween<double>(begin: 0, end: 1)
+        .animate(CurvedAnimation(curve: Curves.easeIn, parent: _controller));
+
+    _controller.forward();
+
+    /// Redirect after 2.2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomePage()),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Updated Bigger Logo
+                Image.asset(
+                  "assets/splash.jpg",
+                  width: 200, // Increased Size
+                ),
+
+                const SizedBox(height: 16),
+
+                const Text(
+                  "yourSchemes",
+                  style: TextStyle(
+                    fontSize: 26,  // Bigger Text
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF015AA5),
+                    letterSpacing: 1,
+                  ),
+                ),
+
+                const SizedBox(height: 5),
+
+                const Text(
+                  "आपकी योजनाएँ",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late final AnimationController _entryController;
@@ -61,6 +163,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int _selectedSchemeCategory = 0;
 
   bool _isReady = false;
+
+final List<Map<String, String>> notifications = [
+  {
+    "title": "PM Awas Yojana List Updated",
+    "time": "2 hrs ago",
+    "msg": "New beneficiary list available. Check eligibility now."
+  },
+  {
+    "title": "Ayushman Bharat Verification",
+    "time": "Yesterday",
+    "msg": "Your Ayushman health card requires verification."
+  },
+  {
+    "title": "Kisan Samman Nidhi Released",
+    "time": "2 days ago",
+    "msg": "₹2,000 installment transferred to eligible farmers."
+  },
+  {
+    "title": "New Scholarship Applications Open",
+    "time": "3 days ago",
+    "msg": "Apply before the deadline to avoid rejection."
+  },
+];
+
+
 final schemeData = {
   "Infancy": [
     {
@@ -1061,19 +1188,6 @@ Widget _bullet(String text) {
     }
   }
 
-  // Widget _bullet(String text) {
-  //   return Padding(
-  //     padding: const EdgeInsets.only(bottom: 4),
-  //     child: Row(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         const Text("• ", style: TextStyle(fontSize: 14)),
-  //         Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   // ------------------ WIDGETS -------------------------
 
   Widget _buildBottomNavBar() {
@@ -1329,19 +1443,29 @@ Widget _bullet(String text) {
           ),
 
           const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE8F3FF),
-              borderRadius: BorderRadius.circular(20),
+          InkWell(
+            
+               
+             
+            
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F3FF),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(),
             ),
-            child: Row(),
           ),
           const SizedBox(width: 10),
           Stack(
             clipBehavior: Clip.none,
             children: [
-              const Icon(Icons.notifications_none_outlined, size: 26),
+              InkWell(
+                onTap: () {
+                  _showNotificationPanel();
+                },
+                child: const Icon(Icons.notifications_none_outlined, size: 29)),
               Positioned(
                 right: -2,
                 top: -2,
@@ -1354,7 +1478,7 @@ Widget _bullet(String text) {
                   ),
                   alignment: Alignment.center,
                   child: const Text(
-                    "1",
+                    "4",
                     style: TextStyle(fontSize: 9, color: Colors.white),
                   ),
                 ),
@@ -1929,7 +2053,7 @@ Widget _buildVerticalAnnouncement() {
 
   // 🔄 Auto scroll every 3 seconds
   WidgetsBinding.instance.addPostFrameCallback((_) {
-    Timer.periodic(const Duration(seconds: 3), (timer) {
+    Timer.periodic(const Duration(seconds: 2), (timer) {
       if (controller.hasClients) {
         final nextPage = (controller.page!.round() + 1) % totalSlides;
         controller.animateToPage(
@@ -2099,6 +2223,166 @@ Widget _buildVerticalAnnouncement() {
   }
 
 
+void _showNotificationPanel() {
+  showGeneralDialog(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: '',
+    barrierColor: Colors.black.withOpacity(0.35), // Background blur
+    transitionDuration: const Duration(milliseconds: 350),
+    pageBuilder: (_, __, ___) {
+      return Align(
+        alignment: Alignment.topCenter,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            height: MediaQuery.of(context).size.height * 0.55,
+            width: MediaQuery.of(context).size.width * 0.95,
+            padding: const EdgeInsets.all(18),
+            margin: const EdgeInsets.only(top: 60),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                )
+              ],
+            ),
+
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                
+                // ------- HEADER -------
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "🔔 Notifications",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        notifications.clear();
+                        Navigator.pop(context);
+                        setState(() {});
+                      },
+                      child: const Text(
+                        "Clear All",
+                        style: TextStyle(color: Colors.red, fontSize: 13),
+                      ),
+                    )
+                  ],
+                ),
+
+                const SizedBox(height: 8),
+
+                Expanded(
+                  child: notifications.isEmpty
+                      ? const Center(
+                          child: Text(
+                            "No notifications yet",
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.grey),
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: notifications.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (_, index) {
+                            final item = notifications[index];
+                            return Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0057C1)
+                                          .withOpacity(0.18),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.notifications_active,
+                                      color: Color(0xFF0057C1),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item["title"]!,
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          item["msg"]!,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            height: 1.25,
+                                            color: Colors.grey.shade700,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          item["time"]!,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey.shade500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+
+    // Slide down animation
+    transitionBuilder: (_, anim, __, child) {
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, -1),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(
+          parent: anim,
+          curve: Curves.easeOutCubic,
+        )),
+        child: Opacity(opacity: anim.value, child: child),
+      );
+    },
+  );
+}
 
 
 

@@ -24,7 +24,6 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.13.1
-  flutter_native_splash: ^2.4.1
 
 # ---------------------------
 # APP ICON CONFIGURATION
@@ -38,18 +37,7 @@ flutter_icons:
 # ---------------------------
 # SPLASH SCREEN CONFIGURATION
 # ---------------------------
-flutter_native_splash:
-  color: "#FFFFFF"
-  image: "assets/splash.jpg"
-  android: true
-  ios: true
-  android_gravity: center
-  web: true
-  
-  android_12:
-    image: "assets/splash.jpg"
-    icon_background_color: "#FFFFFF"
-  
+
 
 
 flutter:
